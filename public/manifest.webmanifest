@@ -1,6 +1,6 @@
 {
-  "name": "Kiki Admin · Gestión de Salón",
-  "short_name": "Kiki Admin",
+  "name": "Kiki Spa · Gestión de Salón",
+  "short_name": "Kiki Spa",
   "description": "Panel móvil de agenda, finanzas y clientas para el salón.",
   "start_url": "/admin",
   "scope": "/",

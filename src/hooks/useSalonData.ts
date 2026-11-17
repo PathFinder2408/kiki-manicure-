@@ -139,6 +139,26 @@ export function useBlogPosts(onlyPublished = true) {
   });
 }
 
+export interface PublicBeautyArticle {
+  title: string;
+  link: string;
+  source: string;
+  publishedAt: string;
+}
+
+export function usePublicBeautyNews() {
+  return useQuery({
+    queryKey: ["public_beauty_news"],
+    queryFn: async (): Promise<PublicBeautyArticle[]> => {
+      const res = await fetch("/api/beauty-news");
+      if (!res.ok) return [];
+      const json = (await res.json()) as { ok?: boolean; items?: PublicBeautyArticle[] };
+      return json.items ?? [];
+    },
+    staleTime: 1000 * 60 * 30,
+  });
+}
+
 export function useBookedSlots(dateStr?: string) {
   return useQuery({
     queryKey: ["booked_slots", dateStr],

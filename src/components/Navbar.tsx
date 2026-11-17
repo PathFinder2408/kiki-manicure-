@@ -18,8 +18,8 @@ const Navbar = () => {
             <span className="brand-elegant text-xl sm:text-2xl bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-gradient-text truncate">
               <span className="brand-kiki">Kiki</span>
               <span className="brand-separator mx-1" />
-              <span className="brand-manicure hidden sm:inline-block">Manicure</span>
-              <span className="brand-manicure sm:hidden">M.</span>
+              <span className="brand-manicure hidden sm:inline-block">Spa</span>
+              <span className="brand-manicure sm:hidden">Spa</span>
             </span>
           </Link>
           

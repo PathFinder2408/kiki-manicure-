@@ -65,7 +65,7 @@ export const SalonLoader = () => {
         </div>
 
         <p className="font-serif font-semibold text-base text-foreground tracking-wide">
-          Kiki Manicure
+          Kiki Spa
         </p>
         <p className="text-xs text-muted-foreground mt-1 transition-opacity duration-300">
           {LOADING_MESSAGES[msgIndex]}

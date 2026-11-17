@@ -71,7 +71,7 @@ const Home = () => {
           <div className="max-w-3xl mx-auto space-y-6 animate-hero-entry">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm rounded-full border border-primary/20">
               <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium">Manicura Profesional</span>
+              <span className="text-sm font-medium">Spa & Manicura Profesional</span>
             </div>
             
             <h1 className="text-4xl md:text-5xl lg:text-7xl font-serif font-bold leading-tight">
@@ -218,7 +218,7 @@ const Home = () => {
             <span className="brand-elegant text-2xl bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-gradient-text">
               <span className="brand-kiki">Kiki</span>
               <span className="brand-separator" />
-              <span className="brand-manicure">Manicure</span>
+              <span className="brand-manicure">Spa</span>
             </span>
           </div>
           <p className="text-muted-foreground mb-6">

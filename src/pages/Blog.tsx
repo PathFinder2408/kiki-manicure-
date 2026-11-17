@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, Calendar, Sparkles } from "lucide-react";
+import { BookOpen, Calendar, ExternalLink, Globe, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useBlogPosts } from "@/hooks/useSalonData";
+import { useBlogPosts, usePublicBeautyNews } from "@/hooks/useSalonData";
 import { formatDisplayDate } from "@/lib/formatters";
 import type { BlogPost } from "@/types/salon";
 
@@ -24,6 +24,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const Blog = () => {
   const { data: posts = [], isLoading } = useBlogPosts(true);
+  const { data: publicNews = [] } = usePublicBeautyNews();
   const [selectedCat, setSelectedCat] = useState("all");
   const [activePost, setActivePost] = useState<BlogPost | null>(null);
 
@@ -114,6 +115,50 @@ const Blog = () => {
                 </Card>
               ))}
             </div>
+          )}
+
+          {/* Noticias Públicas Automáticas */}
+          {publicNews.length > 0 && (
+            <section className="mt-16">
+              <div className="flex items-center gap-2 mb-5">
+                <Globe className="w-5 h-5 text-primary" />
+                <div>
+                  <h2 className="text-2xl font-serif font-bold">
+                    Actualidad Pública en Dermatología & Spa
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Titulares actualizados automáticamente desde fuentes públicas
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {publicNews.map((item) => (
+                  <a
+                    key={item.link}
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group block"
+                  >
+                    <Card className="p-4 rounded-2xl border-border/60 hover:border-primary/40 transition-all h-full flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-2">
+                          <span className="font-semibold text-primary">{item.source}</span>
+                          <span className="tabular-nums">{item.publishedAt}</span>
+                        </div>
+                        <h3 className="font-medium text-sm group-hover:text-primary transition-colors line-clamp-3">
+                          {item.title}
+                        </h3>
+                      </div>
+                      <div className="mt-3 pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-muted-foreground group-hover:text-primary">
+                        Leer en fuente original <ExternalLink className="w-3 h-3" />
+                      </div>
+                    </Card>
+                  </a>
+                ))}
+              </div>
+            </section>
           )}
 
           {/* CTA inferior */}
