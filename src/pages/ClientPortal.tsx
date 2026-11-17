@@ -47,21 +47,14 @@ const ClientPortal = () => {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      const user = data.session?.user;
-      setUserEmail(user?.email ?? null);
-      setUserName(
-        (user?.user_metadata?.full_name as string) ||
-          user?.email?.split("@")[0] ||
-          ""
-      );
-      setLoadingAuth(false);
-      if (user) loadMyAppointments();
-    });
+    let mounted = true;
+    const url = new URL(window.location.href);
+    const hasAuthParams =
+      url.searchParams.has("code") ||
+      window.location.hash.includes("access_token=");
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const applySession = (session: { user?: { email?: string; user_metadata?: Record<string, unknown> } } | null) => {
+      if (!mounted) return;
       const user = session?.user;
       setUserEmail(user?.email ?? null);
       setUserName(
@@ -69,10 +62,49 @@ const ClientPortal = () => {
           user?.email?.split("@")[0] ||
           ""
       );
-      if (user) loadMyAppointments();
+      if (user) {
+        loadMyAppointments();
+        if (hasAuthParams) {
+          window.history.replaceState({}, document.title, "/mi-agenda");
+        }
+      }
+      setLoadingAuth(false);
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
     });
 
-    return () => subscription.unsubscribe();
+    const init = async () => {
+      const code = url.searchParams.get("code");
+      if (code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!error && data.session) {
+          applySession(data.session);
+          return;
+        }
+      }
+
+      const { data } = await supabase.auth.getSession();
+      // Si hay tokens en la URL esperando ser procesados, esperamos a onAuthStateChange
+      if (!data.session && hasAuthParams) {
+        setTimeout(async () => {
+          const retry = await supabase.auth.getSession();
+          applySession(retry.data.session);
+        }, 1200);
+        return;
+      }
+      applySession(data.session);
+    };
+
+    init();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [loadMyAppointments]);
 
   const handleGoogleLogin = async () => {
