@@ -26,6 +26,7 @@ import { CobrarCitaModal } from "@/components/admin/CobrarCitaModal";
 import { InstallAppButton } from "@/components/admin/InstallAppButton";
 import { useBlogPosts, useBusinessConfig, useServices } from "@/hooks/useSalonData";
 import { getCurrentMonthKey, getLocalDateString, getMonthBounds } from "@/lib/dateUtils";
+import { getMindfulMessage, getTimeGreeting, resolveDisplayName } from "@/lib/greetings";
 import { supabase } from "@/supabase";
 import type {
   Cita,
@@ -55,6 +56,7 @@ const Admin = () => {
 
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonthKey());
+  const [adminName, setAdminName] = useState<string>("");
   const [citas, setCitas] = useState<Cita[]>([]);
   const [clientas, setClientas] = useState<Clienta[]>([]);
   const [finanzasMes, setFinanzasMes] = useState<Finanza[]>([]);
@@ -108,6 +110,15 @@ const Admin = () => {
     const manifestLink = document.querySelector('link[rel="manifest"]');
     const previousHref = manifestLink?.getAttribute("href");
     manifestLink?.setAttribute("href", "/admin-manifest.webmanifest");
+
+    supabase.auth.getUser().then(({ data }) => {
+      const u = data.user;
+      if (u) {
+        setAdminName(
+          resolveDisplayName(u.email, u.user_metadata?.full_name as string | undefined)
+        );
+      }
+    });
 
     fetchCitas();
     fetchFinanzas();
@@ -246,7 +257,7 @@ const Admin = () => {
         </div>
 
         <div className="space-y-2 pt-4 border-t">
-          <InstallAppButton />
+          <InstallAppButton alwaysShow appTitle="Kiki Admin" label="Descargar App Admin" />
           <Button
             variant="outline"
             size="sm"
@@ -270,17 +281,19 @@ const Admin = () => {
       <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
         {/* Topbar Móvil y Header */}
         <header className="sticky top-0 z-20 bg-background/90 backdrop-blur border-b px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
-          <div>
-            <h1 className="font-serif font-bold text-lg sm:text-xl">
-              {NAV_ITEMS.find((n) => n.id === activeTab)?.label}
+          <div className="min-w-0">
+            <h1 className="font-serif font-bold text-lg sm:text-xl truncate">
+              {adminName
+                ? `${getTimeGreeting()}, ${adminName}`
+                : NAV_ITEMS.find((n) => n.id === activeTab)?.label}
             </h1>
-            <p className="text-xs text-muted-foreground hidden sm:block">
-              {config?.nombre_salon ?? "Kiki Manicure"} · Monitoreo en tiempo real
+            <p className="text-xs text-muted-foreground truncate">
+              {getMindfulMessage()}
             </p>
           </div>
 
-          <div className="flex items-center gap-2 lg:hidden">
-            <InstallAppButton compact />
+          <div className="flex items-center gap-2 lg:hidden shrink-0">
+            <InstallAppButton compact alwaysShow appTitle="Kiki Admin" label="App Admin" />
             <Button variant="outline" size="sm" onClick={() => navigate("/")} className="rounded-xl">
               Web
             </Button>

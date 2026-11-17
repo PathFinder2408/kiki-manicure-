@@ -197,17 +197,17 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4">
+      <section className="py-16 sm:py-20 px-4">
         <div className="container mx-auto max-w-4xl text-center" ref={ctaRef}>
-          <TiltCard className="p-8 md:p-12 bg-gradient-hero border-2 border-accent/20 shadow-hover">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold mb-6">
+          <TiltCard className="p-6 sm:p-10 md:p-12 bg-gradient-hero border-2 border-accent/20 shadow-hover overflow-hidden">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-serif font-bold mb-4 sm:mb-6 break-words">
               ¿Lista para tu Transformación?
             </h2>
-            <p className="text-lg sm:text-xl text-foreground/80 mb-8 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-lg text-foreground/80 mb-7 max-w-xl mx-auto">
               Agenda tu cita hoy y descubre la diferencia de un servicio profesional y personalizado
             </p>
-            <Link to="/agendar">
-              <Button size="lg" variant="default" className="bg-card text-foreground hover:bg-card/90 min-w-[250px]">
+            <Link to="/agendar" className="block sm:inline-block">
+              <Button size="lg" variant="default" className="w-full sm:w-auto sm:min-w-[240px] bg-card text-foreground hover:bg-card/90">
                 <Calendar className="mr-2 h-5 w-5" />
                 Agendar Ahora
               </Button>
@@ -217,7 +217,7 @@ const Home = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-card border-t border-border py-12 px-4">
+      <footer className="bg-card border-t border-border pt-12 pb-24 md:pb-12 px-4">
         <div className="container mx-auto text-center">
           <div className="mb-4">
             <span className="brand-elegant text-2xl bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-gradient-text">

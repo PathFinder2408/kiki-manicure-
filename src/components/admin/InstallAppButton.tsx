@@ -17,9 +17,16 @@ interface BeforeInstallPromptEvent extends Event {
 interface InstallAppButtonProps {
   compact?: boolean;
   label?: string;
+  alwaysShow?: boolean;
+  appTitle?: string;
 }
 
-export const InstallAppButton = ({ compact = false, label }: InstallAppButtonProps) => {
+export const InstallAppButton = ({
+  compact = false,
+  label,
+  alwaysShow = false,
+  appTitle = "Kiki Spa",
+}: InstallAppButtonProps) => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
@@ -48,7 +55,7 @@ export const InstallAppButton = ({ compact = false, label }: InstallAppButtonPro
     };
   }, []);
 
-  if (isInstalled) {
+  if (isInstalled && !alwaysShow) {
     if (compact) return null;
     return (
       <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-100/80 text-green-800 text-xs font-medium">
@@ -91,10 +98,10 @@ export const InstallAppButton = ({ compact = false, label }: InstallAppButtonPro
         <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-serif flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-primary" /> Instalar Kiki Admin en tu Dispositivo
+              <Smartphone className="w-5 h-5 text-primary" /> Instalar {appTitle} en tu Dispositivo
             </DialogTitle>
             <DialogDescription>
-              Lleva el tablero de citas y finanzas directo en la pantalla de inicio de tu celular.
+              Lleva {appTitle} directo en la pantalla de inicio de tu celular como una app independiente.
             </DialogDescription>
           </DialogHeader>
 

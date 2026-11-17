@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { InstallAppButton } from "@/components/admin/InstallAppButton";
 import { formatCurrency, formatDisplayDate } from "@/lib/formatters";
+import { getMindfulMessage, getTimeGreeting, resolveDisplayName } from "@/lib/greetings";
 import { downloadAppointmentICS, getGoogleCalendarUrl } from "@/lib/icsGenerator";
 import { useBusinessConfig } from "@/hooks/useSalonData";
 import { supabase } from "@/supabase";
@@ -254,9 +255,13 @@ const ClientPortal = () => {
             <div className="space-y-6">
               <Card className="p-5 rounded-2xl border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs text-muted-foreground">Bienvenida</p>
-                  <p className="font-serif font-semibold text-lg">{userName || userEmail}</p>
-                  <p className="text-xs text-muted-foreground">{userEmail}</p>
+                  <p className="text-xs text-primary font-medium">
+                    {getTimeGreeting()}, {resolveDisplayName(userEmail, userName)} ✨
+                  </p>
+                  <p className="font-serif font-semibold text-lg mt-0.5">
+                    {getMindfulMessage()}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{userEmail}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Link to="/agendar">

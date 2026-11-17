@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,11 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    manifestLink?.setAttribute("href", "/admin-manifest.webmanifest");
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
