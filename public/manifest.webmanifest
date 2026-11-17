@@ -1,0 +1,19 @@
+{
+  "name": "Kiki Admin · Gestión de Salón",
+  "short_name": "Kiki Admin",
+  "description": "Panel móvil de agenda, finanzas y clientas para el salón.",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF8F5",
+  "theme_color": "#6E2C3B",
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
