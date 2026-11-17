@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { InlineSalonLoader } from "@/components/SalonLoader";
 import { getLocalDateString } from "@/lib/dateUtils";
 import { formatCurrency, formatDisplayDate } from "@/lib/formatters";
 import { supabase } from "@/supabase";
@@ -479,7 +480,7 @@ export const AdminClientsTab = ({
                   Memoria de Atenciones ({atenciones.length})
                 </p>
                 {loadingFicha ? (
-                  <p className="text-xs text-muted-foreground py-4 text-center">Cargando historial...</p>
+                  <InlineSalonLoader context="ficha" />
                 ) : atenciones.length === 0 ? (
                   <p className="text-xs text-muted-foreground py-4 text-center border border-dashed rounded-xl">
                     Aún no hay atenciones registradas en su ficha.

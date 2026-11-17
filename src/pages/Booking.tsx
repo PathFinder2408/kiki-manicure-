@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 
 import Navbar from "@/components/Navbar";
+import { InlineSalonLoader } from "@/components/SalonLoader";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card } from "@/components/ui/card";
@@ -308,9 +309,7 @@ const Booking = () => {
               </div>
 
               {loadingServices ? (
-                <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" /> Cargando servicios...
-                </div>
+                <InlineSalonLoader context="services" />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {filteredServices.map((srv) => {
@@ -430,9 +429,7 @@ const Booking = () => {
                       Selecciona un día en el calendario para ver las horas libres.
                     </div>
                   ) : loadingSlots ? (
-                    <div className="flex items-center justify-center py-10 text-sm text-muted-foreground gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Consultando disponibilidad...
-                    </div>
+                    <InlineSalonLoader context="slots" />
                   ) : (
                     <div className="grid grid-cols-3 gap-2.5">
                       {timeSlots.map(({ time, available }) => (

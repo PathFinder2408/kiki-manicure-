@@ -1,19 +1,66 @@
 import { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { BookOpen, CalendarClock, ClipboardList, Flower2, Sparkles } from "lucide-react";
 
-const LOADING_MESSAGES = [
+const APP_MESSAGES = [
   "Puliendo cada detalle...",
   "Preparando tus tonos favoritos...",
   "Alistando tu espacio de spa...",
   "Dando brillo final...",
 ];
 
+export type LoaderContext = "app" | "slots" | "services" | "blog" | "ficha" | "client";
+
+const CONTEXT_CONFIG: Record<
+  LoaderContext,
+  {
+    title: string;
+    subtitle: string;
+    icon: React.ComponentType<{ className?: string }>;
+    skeletonRows?: number;
+  }
+> = {
+  app: {
+    title: "Kiki Spa",
+    subtitle: "Alistando tu espacio de bienestar...",
+    icon: Flower2,
+  },
+  slots: {
+    title: "Buscando tu momento ideal",
+    subtitle: "Revisando espacios libres en cabina...",
+    icon: CalendarClock,
+    skeletonRows: 3,
+  },
+  services: {
+    title: "Preparando carta de tratamientos",
+    subtitle: "Cargando manicura, spa y rituales...",
+    icon: Sparkles,
+    skeletonRows: 2,
+  },
+  blog: {
+    title: "Actualizando revista de belleza",
+    subtitle: "Cargando consejos de cosmetología y dermatología...",
+    icon: BookOpen,
+    skeletonRows: 3,
+  },
+  ficha: {
+    title: "Abriendo ficha personal",
+    subtitle: "Consultando memoria de tonos y atenciones...",
+    icon: ClipboardList,
+    skeletonRows: 2,
+  },
+  client: {
+    title: "Preparando tu agenda",
+    subtitle: "Verificando tu cuenta de Kiki Spa...",
+    icon: Flower2,
+  },
+};
+
 export const SalonLoader = () => {
   const [msgIndex, setMsgIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setMsgIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
+      setMsgIndex((prev) => (prev + 1) % APP_MESSAGES.length);
     }, 1400);
     return () => clearInterval(interval);
   }, []);
@@ -21,56 +68,72 @@ export const SalonLoader = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 select-none">
       <div className="relative flex flex-col items-center">
-        {/* Halo suave */}
-        <div className="absolute -inset-6 rounded-full bg-primary/10 blur-2xl animate-pulse" />
+        <div className="absolute -inset-8 rounded-full bg-accent/20 blur-2xl animate-pulse" />
 
-        {/* Icono SVG animado de frasco de esmalte + destellos */}
-        <div className="relative w-20 h-20 flex items-center justify-center rounded-2xl bg-card border border-accent/30 shadow-sm mb-5">
+        <div className="relative w-20 h-20 flex items-center justify-center rounded-2xl bg-card border border-accent/40 shadow-sm mb-5">
           <Sparkles className="w-4 h-4 text-accent absolute top-2 right-2 animate-pulse" />
           <Sparkles className="w-3 h-3 text-primary/60 absolute bottom-2.5 left-2.5 animate-bounce" />
-
-          <svg
-            viewBox="0 0 64 64"
-            className="w-11 h-11 text-primary animate-bounce"
+          <Flower2
+            className="w-10 h-10 text-primary animate-pulse"
             style={{ animationDuration: "1.8s" }}
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            {/* Tapa / pincel del esmalte */}
-            <rect x="25" y="6" width="14" height="16" rx="3" fill="currentColor" opacity="0.9" />
-            <rect x="28" y="22" width="8" height="5" rx="1" fill="#C8A27A" />
-            {/* Frasco */}
-            <path
-              d="M17 31C17 28.7909 18.7909 27 21 27H43C45.2091 27 47 28.7909 47 31V50C47 54.4183 43.4183 58 39 58H25C20.5817 58 17 54.4183 17 50V31Z"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              fill="#FAF8F5"
-            />
-            {/* Esmalte interior */}
-            <path
-              d="M21 38H43V50C43 52.2091 41.2091 54 39 54H25C22.7909 54 21 52.2091 21 50V38Z"
-              fill="currentColor"
-              opacity="0.85"
-            />
-            {/* Brillo */}
-            <path
-              d="M25 41V49"
-              stroke="#FAF8F5"
-              strokeWidth="2"
-              strokeLinecap="round"
-              opacity="0.7"
-            />
-          </svg>
+          />
         </div>
 
-        <p className="font-serif font-semibold text-base text-foreground tracking-wide">
+        <p className="font-serif font-semibold text-lg text-foreground tracking-wide">
           Kiki Spa
         </p>
         <p className="text-xs text-muted-foreground mt-1 transition-opacity duration-300">
-          {LOADING_MESSAGES[msgIndex]}
+          {APP_MESSAGES[msgIndex]}
         </p>
       </div>
+    </div>
+  );
+};
+
+interface InlineSalonLoaderProps {
+  context: Exclude<LoaderContext, "app">;
+}
+
+export const InlineSalonLoader = ({ context }: InlineSalonLoaderProps) => {
+  const cfg = CONTEXT_CONFIG[context];
+  const Icon = cfg.icon;
+
+  return (
+    <div className="py-6 px-4 rounded-2xl border border-accent/25 bg-card/70 text-center space-y-4 animate-fade-in">
+      <div className="flex flex-col items-center gap-2">
+        <div className="relative w-12 h-12 rounded-2xl bg-primary/10 border border-accent/30 flex items-center justify-center text-primary">
+          <Icon className="w-5 h-5 animate-pulse" />
+          <Sparkles className="w-3 h-3 text-accent absolute -top-1 -right-1 animate-ping" />
+        </div>
+        <div>
+          <p className="font-serif font-semibold text-sm text-foreground">{cfg.title}</p>
+          <p className="text-xs text-muted-foreground">{cfg.subtitle}</p>
+        </div>
+      </div>
+
+      {context === "slots" && (
+        <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto pt-1">
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <div
+              key={n}
+              className="h-9 rounded-xl bg-muted/70 animate-pulse"
+              style={{ animationDelay: `${n * 90}ms` }}
+            />
+          ))}
+        </div>
+      )}
+
+      {(context === "services" || context === "blog" || context === "ficha") && (
+        <div className="space-y-2 max-w-md mx-auto pt-1">
+          {Array.from({ length: cfg.skeletonRows ?? 2 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="h-12 rounded-xl bg-muted/60 animate-pulse"
+              style={{ animationDelay: `${idx * 120}ms` }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

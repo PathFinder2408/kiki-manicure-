@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Calendar, CalendarPlus, LogOut, Mail, Sparkles, Star } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import { InlineSalonLoader } from "@/components/SalonLoader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -193,7 +194,11 @@ const ClientPortal = () => {
             </div>
           </div>
 
-          {loadingAuth ? null : !userEmail ? (
+          {loadingAuth ? (
+            <div className="max-w-md mx-auto">
+              <InlineSalonLoader context="client" />
+            </div>
+          ) : !userEmail ? (
             <Card className="p-6 sm:p-8 rounded-2xl border-border/60 max-w-md mx-auto space-y-5 text-center">
               <div>
                 <h2 className="font-serif text-xl font-semibold mb-1">Ingresa con tu cuenta</h2>

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, Calendar, ExternalLink, Globe, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { InlineSalonLoader } from "@/components/SalonLoader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,11 +70,7 @@ const Blog = () => {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="p-6 rounded-2xl h-56 animate-pulse bg-muted/40" />
-              ))}
-            </div>
+            <InlineSalonLoader context="blog" />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.map((post) => (
