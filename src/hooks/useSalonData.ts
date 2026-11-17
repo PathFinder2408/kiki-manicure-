@@ -14,6 +14,16 @@ const FALLBACK_SERVICES: Servicio[] = [
   { id: "8", slug: "spa-premium", nombre: "Spa de Manos Premium", categoria: "spa", descripcion: "Tratamiento completo con parafina y esmaltado.", duracion_min: 60, precio: 25000, activo: true, orden: 8 },
 ];
 
+const DEFAULT_WEEKLY_SCHEDULE = {
+  "0": { activo: false, apertura: "15:00", cierre: "18:00" },
+  "1": { activo: true, apertura: "09:00", cierre: "19:00" },
+  "2": { activo: true, apertura: "09:00", cierre: "19:00" },
+  "3": { activo: true, apertura: "09:00", cierre: "19:00" },
+  "4": { activo: true, apertura: "09:00", cierre: "19:00" },
+  "5": { activo: true, apertura: "09:00", cierre: "19:00" },
+  "6": { activo: true, apertura: "09:00", cierre: "18:00" },
+};
+
 const FALLBACK_CONFIG: NegocioConfig = {
   id: 1,
   nombre_salon: "Kiki Manicure",
@@ -26,6 +36,7 @@ const FALLBACK_CONFIG: NegocioConfig = {
   intervalo_min: 60,
   dias_cerrados: [0],
   moneda: "CLP",
+  horarios_semana: DEFAULT_WEEKLY_SCHEDULE,
 };
 
 export function useServices(onlyActive = true) {

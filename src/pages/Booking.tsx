@@ -113,20 +113,25 @@ const Booking = () => {
   }, [services, selectedCategory]);
 
   const timeSlots = useMemo(() => {
-    if (!selectedDateStr || !selectedServiceObj) return [];
+    if (!selectedDateStr || !selectedServiceObj || !selectedDate) return [];
     const now = new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const dayKey = String(selectedDate.getDay());
+    const dayCfg = config?.horarios_semana?.[dayKey];
+    const openTime = dayCfg?.apertura ?? config?.horario_apertura ?? "09:00";
+    const closeTime = dayCfg?.cierre ?? config?.horario_cierre ?? "19:00";
+
     return getAvailableSlots({
       dateStr: selectedDateStr,
       todayStr: getLocalDateString(now),
       nowMinutes,
       serviceDurationMin: selectedServiceObj.duracion_min,
-      openTime: config?.horario_apertura ?? "09:00",
-      closeTime: config?.horario_cierre ?? "19:00",
+      openTime,
+      closeTime,
       intervalMin: config?.intervalo_min ?? 60,
       bookedSlots,
     });
-  }, [selectedDateStr, selectedServiceObj, config, bookedSlots]);
+  }, [selectedDateStr, selectedDate, selectedServiceObj, config, bookedSlots]);
 
   const triggerCelebration = () => {
     const end = Date.now() + 1800;
@@ -379,6 +384,9 @@ const Booking = () => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
                       if (date < today) return true;
+                      const dayKey = String(date.getDay());
+                      const dayCfg = config?.horarios_semana?.[dayKey];
+                      if (dayCfg) return !dayCfg.activo;
                       const closedDays = config?.dias_cerrados ?? [0];
                       return closedDays.includes(date.getDay());
                     }}

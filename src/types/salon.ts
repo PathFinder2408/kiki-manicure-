@@ -66,6 +66,14 @@ export interface Clienta {
   created_at?: string;
 }
 
+export interface DaySchedule {
+  activo: boolean;
+  apertura: string;
+  cierre: string;
+}
+
+export type WeeklySchedule = Record<string, DaySchedule>;
+
 export interface NegocioConfig {
   id: number;
   nombre_salon: string;
@@ -78,4 +86,5 @@ export interface NegocioConfig {
   intervalo_min: number;
   dias_cerrados: number[];
   moneda: string;
+  horarios_semana?: WeeklySchedule;
 }

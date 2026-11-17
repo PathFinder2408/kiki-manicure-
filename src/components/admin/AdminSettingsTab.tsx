@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/supabase";
-import type { NegocioConfig } from "@/types/salon";
+import type { NegocioConfig, WeeklySchedule } from "@/types/salon";
 
 interface AdminSettingsTabProps {
   config: NegocioConfig;
@@ -14,49 +14,75 @@ interface AdminSettingsTabProps {
 }
 
 const WEEK_DAYS = [
-  { id: 0, label: "Dom" },
-  { id: 1, label: "Lun" },
-  { id: 2, label: "Mar" },
-  { id: 3, label: "Mié" },
-  { id: 4, label: "Jue" },
-  { id: 5, label: "Vie" },
-  { id: 6, label: "Sáb" },
+  { id: "1", label: "Lunes" },
+  { id: "2", label: "Martes" },
+  { id: "3", label: "Miércoles" },
+  { id: "4", label: "Jueves" },
+  { id: "5", label: "Viernes" },
+  { id: "6", label: "Sábado" },
+  { id: "0", label: "Domingo" },
 ];
+
+function buildInitialSchedule(config: NegocioConfig): WeeklySchedule {
+  if (config.horarios_semana && Object.keys(config.horarios_semana).length === 7) {
+    return config.horarios_semana;
+  }
+  const result: WeeklySchedule = {};
+  for (const d of WEEK_DAYS) {
+    const dayNum = Number(d.id);
+    result[d.id] = {
+      activo: !config.dias_cerrados.includes(dayNum),
+      apertura: config.horario_apertura || "09:00",
+      cierre: config.horario_cierre || "19:00",
+    };
+  }
+  return result;
+}
 
 export const AdminSettingsTab = ({ config, onSaved }: AdminSettingsTabProps) => {
   const [form, setForm] = useState<NegocioConfig>(config);
+  const [schedule, setSchedule] = useState<WeeklySchedule>(() => buildInitialSchedule(config));
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setForm(config);
+    setSchedule(buildInitialSchedule(config));
   }, [config]);
 
-  const toggleClosedDay = (dayId: number) => {
-    setForm((prev) => {
-      const exists = prev.dias_cerrados.includes(dayId);
-      return {
-        ...prev,
-        dias_cerrados: exists
-          ? prev.dias_cerrados.filter((d) => d !== dayId)
-          : [...prev.dias_cerrados, dayId],
-      };
-    });
+  const updateDay = (
+    dayId: string,
+    patch: Partial<{ activo: boolean; apertura: string; cierre: string }>
+  ) => {
+    setSchedule((prev) => ({
+      ...prev,
+      [dayId]: {
+        ...(prev[dayId] ?? { activo: true, apertura: "09:00", cierre: "19:00" }),
+        ...patch,
+      },
+    }));
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("negocio_config")
-        .upsert({ ...form, id: 1 });
+      const closedDays = Object.entries(schedule)
+        .filter(([, val]) => !val.activo)
+        .map(([k]) => Number(k));
+
+      const { error } = await supabase.from("negocio_config").upsert({
+        ...form,
+        id: 1,
+        dias_cerrados: closedDays,
+        horarios_semana: schedule,
+      });
 
       if (error) {
         toast.error("No se pudo guardar la configuración");
         return;
       }
 
-      toast.success("Configuración del negocio actualizada");
+      toast.success("Configuración y horarios actualizados");
       onSaved();
     } finally {
       setSaving(false);
@@ -70,11 +96,11 @@ export const AdminSettingsTab = ({ config, onSaved }: AdminSettingsTabProps) => 
           <Settings className="w-5 h-5 text-primary" /> Configuración White-Label del Negocio
         </h2>
         <p className="text-xs text-muted-foreground">
-          Personaliza la identidad del salón, horarios de atención y moneda sin tocar código.
+          Personaliza la identidad del salón, moneda y horarios específicos para cada día de la semana.
         </p>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-5">
+      <form onSubmit={handleSave} className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label>Nombre del Salón</Label>
@@ -117,65 +143,85 @@ export const AdminSettingsTab = ({ config, onSaved }: AdminSettingsTabProps) => 
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t">
-          <div>
-            <Label>Hora Apertura</Label>
-            <Input
-              type="time"
-              value={form.horario_apertura}
-              onChange={(e) => setForm({ ...form, horario_apertura: e.target.value })}
-              className="mt-1 rounded-xl tabular-nums"
-            />
+        <div className="pt-4 border-t space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <Label className="text-sm font-semibold">Horarios Disponibles por Día</Label>
+              <p className="text-xs text-muted-foreground">
+                Activa cualquier día (ej. Domingo de 15:00 a 18:00) y define su rango horario.
+              </p>
+            </div>
+            <div className="w-full sm:w-44">
+              <select
+                value={form.intervalo_min}
+                onChange={(e) =>
+                  setForm({ ...form, intervalo_min: Number.parseInt(e.target.value, 10) })
+                }
+                className="w-full px-3 py-1.5 rounded-xl border bg-background text-xs tabular-nums"
+              >
+                <option value={30}>Turnos cada 30 min</option>
+                <option value={45}>Turnos cada 45 min</option>
+                <option value={60}>Turnos cada 60 min</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <Label>Hora Cierre</Label>
-            <Input
-              type="time"
-              value={form.horario_cierre}
-              onChange={(e) => setForm({ ...form, horario_cierre: e.target.value })}
-              className="mt-1 rounded-xl tabular-nums"
-            />
-          </div>
-          <div>
-            <Label>Intervalo Agenda (min)</Label>
-            <select
-              value={form.intervalo_min}
-              onChange={(e) =>
-                setForm({ ...form, intervalo_min: Number.parseInt(e.target.value, 10) })
-              }
-              className="w-full mt-1 px-3 py-2 rounded-xl border bg-background text-sm tabular-nums"
-            >
-              <option value={30}>Cada 30 min</option>
-              <option value={45}>Cada 45 min</option>
-              <option value={60}>Cada 60 min</option>
-            </select>
-          </div>
-        </div>
 
-        <div className="pt-2 border-t">
-          <Label className="block mb-2">Días Cerrados (No disponibles para reserva)</Label>
-          <div className="flex flex-wrap gap-2">
+          <div className="divide-y border rounded-xl overflow-hidden bg-card">
             {WEEK_DAYS.map((day) => {
-              const isClosed = form.dias_cerrados.includes(day.id);
+              const cfg = schedule[day.id] ?? {
+                activo: true,
+                apertura: "09:00",
+                cierre: "19:00",
+              };
               return (
-                <button
+                <div
                   key={day.id}
-                  type="button"
-                  onClick={() => toggleClosedDay(day.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
-                    isClosed
-                      ? "bg-destructive/10 text-destructive border-destructive/30"
-                      : "bg-card text-foreground border-border"
-                  }`}
+                  className="px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
-                  {day.label} {isClosed ? "(Cerrado)" : ""}
-                </button>
+                  <div className="flex items-center gap-3 min-w-[140px]">
+                    <button
+                      type="button"
+                      onClick={() => updateDay(day.id, { activo: !cfg.activo })}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                        cfg.activo
+                          ? "bg-green-100 text-green-800 border-green-200"
+                          : "bg-muted text-muted-foreground border-border"
+                      }`}
+                    >
+                      {cfg.activo ? "Abierto" : "Cerrado"}
+                    </button>
+                    <span className="text-sm font-medium">{day.label}</span>
+                  </div>
+
+                  {cfg.activo ? (
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">De</span>
+                      <Input
+                        type="time"
+                        value={cfg.apertura}
+                        onChange={(e) => updateDay(day.id, { apertura: e.target.value })}
+                        className="h-8 w-28 rounded-lg tabular-nums text-xs"
+                      />
+                      <span className="text-muted-foreground">a</span>
+                      <Input
+                        type="time"
+                        value={cfg.cierre}
+                        onChange={(e) => updateDay(day.id, { cierre: e.target.value })}
+                        className="h-8 w-28 rounded-lg tabular-nums text-xs"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">
+                      No disponible para reservas
+                    </span>
+                  )}
+                </div>
               );
             })}
           </div>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-2">
           <Button type="submit" disabled={saving} className="rounded-xl gap-2">
             <Save className="w-4 h-4" />
             {saving ? "Guardando..." : "Guardar Configuración"}

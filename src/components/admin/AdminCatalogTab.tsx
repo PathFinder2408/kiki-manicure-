@@ -1,10 +1,17 @@
 import { useState } from "react";
-import { Plus, Sparkles, Trash2, Upload } from "lucide-react";
+import { Pencil, Plus, Sparkles, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatCurrency } from "@/lib/formatters";
 import { supabase } from "@/supabase";
 import type { PortafolioItem, Servicio } from "@/types/salon";
@@ -24,8 +31,16 @@ export const AdminCatalogTab = ({
   onRefreshServicios,
   onRefreshPortafolio,
 }: AdminCatalogTabProps) => {
-  // Estado nuevo servicio
+  // Estado nuevo servicio / edición
   const [showServiceForm, setShowServiceForm] = useState(false);
+  const [editingService, setEditingService] = useState<Servicio | null>(null);
+  const [editSrvForm, setEditSrvForm] = useState({
+    nombre: "",
+    categoria: "gel",
+    descripcion: "",
+    duracion_min: "60",
+    precio: "25000",
+  });
   const [srvForm, setSrvForm] = useState({
     nombre: "",
     categoria: "gel",
@@ -80,6 +95,50 @@ export const AdminCatalogTab = ({
       return;
     }
     toast.success(srv.activo ? "Servicio pausado" : "Servicio activado");
+    onRefreshServicios();
+  };
+
+  const openEditService = (srv: Servicio) => {
+    setEditingService(srv);
+    setEditSrvForm({
+      nombre: srv.nombre,
+      categoria: srv.categoria,
+      descripcion: srv.descripcion ?? "",
+      duracion_min: String(srv.duracion_min),
+      precio: String(srv.precio),
+    });
+  };
+
+  const handleSaveEditService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingService) return;
+    const { error } = await supabase
+      .from("servicios")
+      .update({
+        nombre: editSrvForm.nombre.trim(),
+        categoria: editSrvForm.categoria,
+        descripcion: editSrvForm.descripcion.trim(),
+        duracion_min: Number.parseInt(editSrvForm.duracion_min, 10) || 60,
+        precio: Number.parseInt(editSrvForm.precio, 10) || 0,
+      })
+      .eq("id", editingService.id);
+
+    if (error) {
+      toast.error("No se pudo actualizar el servicio");
+      return;
+    }
+    toast.success("Servicio actualizado");
+    setEditingService(null);
+    onRefreshServicios();
+  };
+
+  const handleDeleteService = async (srv: Servicio) => {
+    const { error } = await supabase.from("servicios").delete().eq("id", srv.id);
+    if (error) {
+      toast.error("No se pudo eliminar el servicio");
+      return;
+    }
+    toast.success(`Servicio "${srv.nombre}" eliminado`);
     onRefreshServicios();
   };
 
@@ -232,14 +291,34 @@ export const AdminCatalogTab = ({
                   {srv.duracion_min} min · {formatCurrency(srv.precio, moneda)}
                 </p>
               </div>
-              <Button
-                variant={srv.activo ? "outline" : "secondary"}
-                size="sm"
-                className="rounded-xl w-fit"
-                onClick={() => handleToggleService(srv)}
-              >
-                {srv.activo ? "Activo (Pausar)" : "Pausado (Activar)"}
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant={srv.activo ? "outline" : "secondary"}
+                  size="sm"
+                  className="rounded-xl w-fit"
+                  onClick={() => handleToggleService(srv)}
+                >
+                  {srv.activo ? "Activo (Pausar)" : "Pausado (Activar)"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => openEditService(srv)}
+                  title="Editar servicio"
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive"
+                  onClick={() => handleDeleteService(srv)}
+                  title="Eliminar servicio"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
@@ -314,6 +393,76 @@ export const AdminCatalogTab = ({
           ))}
         </div>
       </Card>
+      {/* Modal Editar Servicio */}
+      <Dialog open={Boolean(editingService)} onOpenChange={(open) => !open && setEditingService(null)}>
+        <DialogContent className="rounded-2xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Editar Servicio</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveEditService} className="space-y-4 py-2">
+            <div>
+              <Label>Nombre</Label>
+              <Input
+                value={editSrvForm.nombre}
+                onChange={(e) => setEditSrvForm({ ...editSrvForm, nombre: e.target.value })}
+                className="mt-1 rounded-xl"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>Categoría</Label>
+                <select
+                  value={editSrvForm.categoria}
+                  onChange={(e) => setEditSrvForm({ ...editSrvForm, categoria: e.target.value })}
+                  className="w-full mt-1 px-2.5 py-2 rounded-xl border bg-background text-sm"
+                >
+                  <option value="gel">Gel</option>
+                  <option value="acrilico">Acrílico</option>
+                  <option value="spa">Spa</option>
+                </select>
+              </div>
+              <div>
+                <Label>Duración (min)</Label>
+                <Input
+                  type="number"
+                  min={15}
+                  step={15}
+                  value={editSrvForm.duracion_min}
+                  onChange={(e) => setEditSrvForm({ ...editSrvForm, duracion_min: e.target.value })}
+                  className="mt-1 rounded-xl tabular-nums"
+                  required
+                />
+              </div>
+              <div>
+                <Label>Precio</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editSrvForm.precio}
+                  onChange={(e) => setEditSrvForm({ ...editSrvForm, precio: e.target.value })}
+                  className="mt-1 rounded-xl tabular-nums"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Descripción</Label>
+              <Input
+                value={editSrvForm.descripcion}
+                onChange={(e) => setEditSrvForm({ ...editSrvForm, descripcion: e.target.value })}
+                className="mt-1 rounded-xl"
+              />
+            </div>
+            <DialogFooter className="gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setEditingService(null)} className="rounded-xl">
+                Cancelar
+              </Button>
+              <Button type="submit" className="rounded-xl">Guardar Cambios</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
