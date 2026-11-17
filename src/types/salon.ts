@@ -57,6 +57,15 @@ export interface PortafolioItem {
   created_at?: string;
 }
 
+export interface Clienta {
+  id: string;
+  nombre: string;
+  telefono: string;
+  email: string;
+  notas: string;
+  created_at?: string;
+}
+
 export interface NegocioConfig {
   id: number;
   nombre_salon: string;

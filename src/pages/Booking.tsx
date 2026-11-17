@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getAvailableSlots } from "@/lib/availability";
 import { getLocalDateString } from "@/lib/dateUtils";
 import { formatCurrency, formatDisplayDate } from "@/lib/formatters";
-import { downloadAppointmentICS } from "@/lib/icsGenerator";
+import { downloadAppointmentICS, getGoogleCalendarUrl } from "@/lib/icsGenerator";
 import { sendWhatsAppNotification } from "@/lib/sendWhatsApp";
 import { useBookedSlots, useBusinessConfig, useServices } from "@/hooks/useSalonData";
 import { supabase } from "@/supabase";
@@ -615,7 +615,27 @@ const Booking = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="rounded-xl gap-2"
+                >
+                  <a
+                    href={getGoogleCalendarUrl({
+                      title: `${selectedServiceObj.nombre} - ${config?.nombre_salon ?? "Kiki Manicure"}`,
+                      description: `Cita de ${selectedServiceObj.nombre} (${selectedServiceObj.duracion_min} min).`,
+                      location: config?.direccion || "Kiki Manicure",
+                      dateStr: selectedDateStr,
+                      timeStr: selectedTime,
+                      durationMin: selectedServiceObj.duracion_min,
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <CalendarPlus className="w-4 h-4" /> Google Calendar
+                  </a>
+                </Button>
                 <Button
                   variant="outline"
                   className="rounded-xl gap-2"
@@ -630,7 +650,7 @@ const Booking = () => {
                     })
                   }
                 >
-                  <CalendarPlus className="w-4 h-4" /> Guardar en Calendario
+                  <CalendarPlus className="w-4 h-4" /> iPhone / Calendario (.ics)
                 </Button>
                 <Button className="rounded-xl" onClick={handleResetAll}>
                   Agendar otra cita

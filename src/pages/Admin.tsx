@@ -27,6 +27,7 @@ import { supabase } from "@/supabase";
 import type {
   Cita,
   CitaEstado,
+  Clienta,
   Finanza,
   MetodoPago,
   PortafolioItem,
@@ -50,6 +51,7 @@ const Admin = () => {
 
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [citas, setCitas] = useState<Cita[]>([]);
+  const [clientas, setClientas] = useState<Clienta[]>([]);
   const [finanzasMes, setFinanzasMes] = useState<Finanza[]>([]);
   const [portafolio, setPortafolio] = useState<PortafolioItem[]>([]);
   const [citaToCharge, setCitaToCharge] = useState<Cita | null>(null);
@@ -85,11 +87,20 @@ const Admin = () => {
     if (!error && data) setPortafolio(data as PortafolioItem[]);
   }, []);
 
+  const fetchClientas = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("clientas")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) setClientas(data as Clienta[]);
+  }, []);
+
   useEffect(() => {
     fetchCitas();
     fetchFinanzas();
     fetchPortafolio();
-  }, [fetchCitas, fetchFinanzas, fetchPortafolio]);
+    fetchClientas();
+  }, [fetchCitas, fetchFinanzas, fetchPortafolio, fetchClientas]);
 
   const citasHoy = useMemo(() => {
     const hoy = getLocalDateString();
@@ -307,7 +318,12 @@ const Admin = () => {
           )}
 
           {activeTab === "clients" && (
-            <AdminClientsTab citas={citas} moneda={moneda} />
+            <AdminClientsTab
+              clientas={clientas}
+              citas={citas}
+              moneda={moneda}
+              onRefreshClientas={fetchClientas}
+            />
           )}
 
           {activeTab === "catalog" && (
