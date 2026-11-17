@@ -26,7 +26,7 @@ import { CobrarCitaModal } from "@/components/admin/CobrarCitaModal";
 import { InstallAppButton } from "@/components/admin/InstallAppButton";
 import { useBlogPosts, useBusinessConfig, useServices } from "@/hooks/useSalonData";
 import { getCurrentMonthKey, getLocalDateString, getMonthBounds } from "@/lib/dateUtils";
-import { getMindfulMessage, getTimeGreeting, resolveDisplayName } from "@/lib/greetings";
+import { getFarewellMessage, getMindfulMessage, getTimeGreeting, resolveDisplayName } from "@/lib/greetings";
 import { supabase } from "@/supabase";
 import type {
   Cita,
@@ -220,6 +220,7 @@ const Admin = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    toast.success(getFarewellMessage(), { duration: 4500 });
     navigate("/login");
   };
 

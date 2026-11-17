@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { InstallAppButton } from "@/components/admin/InstallAppButton";
 import { formatCurrency, formatDisplayDate } from "@/lib/formatters";
-import { getMindfulMessage, getTimeGreeting, isAdminEmail, resolveDisplayName } from "@/lib/greetings";
+import { getFarewellMessage, getMindfulMessage, getTimeGreeting, isAdminEmail, resolveDisplayName } from "@/lib/greetings";
 import { downloadAppointmentICS, getGoogleCalendarUrl } from "@/lib/icsGenerator";
 import { useBusinessConfig } from "@/hooks/useSalonData";
 import { supabase } from "@/supabase";
@@ -186,6 +186,7 @@ const ClientPortal = () => {
     await supabase.auth.signOut();
     setUserEmail(null);
     setCitas([]);
+    toast.success(getFarewellMessage(), { duration: 4500 });
   };
 
   const isAdmin = isAdminEmail(userEmail);

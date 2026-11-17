@@ -51,6 +51,19 @@ export function getMindfulMessage(): string {
   return MINDFUL_PHRASES[idx];
 }
 
+const FAREWELL_PHRASES = [
+  "¡Hasta pronto! Sigue brillando con tu luz propia ✨",
+  "Que tu día sea tan radiante y hermoso como tú 🌸",
+  "Cuida tu belleza y tu paz interior hoy y siempre 💫",
+  "Gracias por compartir tu tiempo; el mejor brillo es tu sonrisa ✨",
+  "Lleva contigo la calma y elegancia de Kiki Spa 🌿",
+];
+
+export function getFarewellMessage(): string {
+  const idx = Math.floor(Math.random() * FAREWELL_PHRASES.length);
+  return FAREWELL_PHRASES[idx];
+}
+
 function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }

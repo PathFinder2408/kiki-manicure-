@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, Menu, Sparkles } from "lucide-react";
+import { Calendar, Menu, Sparkles, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { InstallAppButton } from "@/components/admin/InstallAppButton";
@@ -46,6 +46,13 @@ const Navbar = () => {
                 <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-primary rounded-full transition-all duration-300 group-hover:w-full group-hover:left-0" />
               </Link>
             ))}
+            <Link
+              to="/mi-agenda"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-background/70 hover:border-primary/40 hover:text-primary text-xs font-medium transition-colors"
+              title="Ingresar a mi cuenta"
+            >
+              <User className="h-3.5 w-3.5" /> Ingresar
+            </Link>
           </div>
 
           {/* Mobile Nav */}
