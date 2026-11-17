@@ -47,4 +47,27 @@ describe("availability engine", () => {
     expect(map["11:00"]).toBe(false);
     expect(map["12:00"]).toBe(true);
   });
+
+  it("supports split morning and afternoon shifts (e.g. 09:00-12:00 and 17:00-20:00)", () => {
+    const result = getAvailableSlots({
+      dateStr: "2026-12-02",
+      todayStr: "2026-11-17",
+      nowMinutes: 480,
+      serviceDurationMin: 60,
+      openTime: "09:00",
+      closeTime: "12:00",
+      intervalMin: 60,
+      bookedSlots: [],
+      secondShift: { openTime: "17:00", closeTime: "20:00" },
+    });
+
+    expect(result).toEqual([
+      { time: "09:00", available: true },
+      { time: "10:00", available: true },
+      { time: "11:00", available: true },
+      { time: "17:00", available: true },
+      { time: "18:00", available: true },
+      { time: "19:00", available: true },
+    ]);
+  });
 });

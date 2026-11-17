@@ -51,12 +51,26 @@ export const AdminSettingsTab = ({ config, onSaved }: AdminSettingsTabProps) => 
 
   const updateDay = (
     dayId: string,
-    patch: Partial<{ activo: boolean; apertura: string; cierre: string }>
+    patch: Partial<{
+      activo: boolean;
+      apertura: string;
+      cierre: string;
+      bloque2_activo: boolean;
+      apertura2: string;
+      cierre2: string;
+    }>
   ) => {
     setSchedule((prev) => ({
       ...prev,
       [dayId]: {
-        ...(prev[dayId] ?? { activo: true, apertura: "09:00", cierre: "19:00" }),
+        ...(prev[dayId] ?? {
+          activo: true,
+          apertura: "09:00",
+          cierre: "19:00",
+          bloque2_activo: false,
+          apertura2: "17:00",
+          cierre2: "20:00",
+        }),
         ...patch,
       },
     }));
@@ -194,21 +208,59 @@ export const AdminSettingsTab = ({ config, onSaved }: AdminSettingsTabProps) => 
                   </div>
 
                   {cfg.activo ? (
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-muted-foreground">De</span>
-                      <Input
-                        type="time"
-                        value={cfg.apertura}
-                        onChange={(e) => updateDay(day.id, { apertura: e.target.value })}
-                        className="h-8 w-28 rounded-lg tabular-nums text-xs"
-                      />
-                      <span className="text-muted-foreground">a</span>
-                      <Input
-                        type="time"
-                        value={cfg.cierre}
-                        onChange={(e) => updateDay(day.id, { cierre: e.target.value })}
-                        className="h-8 w-28 rounded-lg tabular-nums text-xs"
-                      />
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="text-muted-foreground w-14">Mañana:</span>
+                        <Input
+                          type="time"
+                          value={cfg.apertura}
+                          onChange={(e) => updateDay(day.id, { apertura: e.target.value })}
+                          className="h-8 w-28 rounded-lg tabular-nums text-xs"
+                        />
+                        <span className="text-muted-foreground">a</span>
+                        <Input
+                          type="time"
+                          value={cfg.cierre}
+                          onChange={(e) => updateDay(day.id, { cierre: e.target.value })}
+                          className="h-8 w-28 rounded-lg tabular-nums text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateDay(day.id, {
+                              bloque2_activo: !cfg.bloque2_activo,
+                              apertura2: cfg.apertura2 ?? "17:00",
+                              cierre2: cfg.cierre2 ?? "20:00",
+                            })
+                          }
+                          className={`px-2 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
+                            cfg.bloque2_activo
+                              ? "bg-primary/10 text-primary border-primary/30"
+                              : "bg-muted/60 text-muted-foreground border-border hover:text-foreground"
+                          }`}
+                        >
+                          {cfg.bloque2_activo ? "− Quitar tarde" : "+ Horario tarde"}
+                        </button>
+                      </div>
+
+                      {cfg.bloque2_activo && (
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <span className="text-muted-foreground w-14">Tarde:</span>
+                          <Input
+                            type="time"
+                            value={cfg.apertura2 ?? "17:00"}
+                            onChange={(e) => updateDay(day.id, { apertura2: e.target.value })}
+                            className="h-8 w-28 rounded-lg tabular-nums text-xs"
+                          />
+                          <span className="text-muted-foreground">a</span>
+                          <Input
+                            type="time"
+                            value={cfg.cierre2 ?? "20:00"}
+                            onChange={(e) => updateDay(day.id, { cierre2: e.target.value })}
+                            className="h-8 w-28 rounded-lg tabular-nums text-xs"
+                          />
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <span className="text-xs text-muted-foreground italic">

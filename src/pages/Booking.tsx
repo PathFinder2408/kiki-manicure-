@@ -120,6 +120,10 @@ const Booking = () => {
     const dayCfg = config?.horarios_semana?.[dayKey];
     const openTime = dayCfg?.apertura ?? config?.horario_apertura ?? "09:00";
     const closeTime = dayCfg?.cierre ?? config?.horario_cierre ?? "19:00";
+    const secondShift =
+      dayCfg?.bloque2_activo && dayCfg.apertura2 && dayCfg.cierre2
+        ? { openTime: dayCfg.apertura2, closeTime: dayCfg.cierre2 }
+        : null;
 
     return getAvailableSlots({
       dateStr: selectedDateStr,
@@ -130,6 +134,7 @@ const Booking = () => {
       closeTime,
       intervalMin: config?.intervalo_min ?? 60,
       bookedSlots,
+      secondShift,
     });
   }, [selectedDateStr, selectedDate, selectedServiceObj, config, bookedSlots]);
 

@@ -82,6 +82,9 @@ export interface DaySchedule {
   activo: boolean;
   apertura: string;
   cierre: string;
+  bloque2_activo?: boolean;
+  apertura2?: string;
+  cierre2?: string;
 }
 
 export type WeeklySchedule = Record<string, DaySchedule>;
