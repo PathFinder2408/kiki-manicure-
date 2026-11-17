@@ -57,6 +57,7 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonthKey());
   const [adminName, setAdminName] = useState<string>("");
+  const [mindfulQuote] = useState<string>(() => getMindfulMessage());
   const [citas, setCitas] = useState<Cita[]>([]);
   const [clientas, setClientas] = useState<Clienta[]>([]);
   const [finanzasMes, setFinanzasMes] = useState<Finanza[]>([]);
@@ -288,7 +289,7 @@ const Admin = () => {
                 : NAV_ITEMS.find((n) => n.id === activeTab)?.label}
             </h1>
             <p className="text-xs text-muted-foreground truncate">
-              {getMindfulMessage()}
+              {mindfulQuote}
             </p>
           </div>
 

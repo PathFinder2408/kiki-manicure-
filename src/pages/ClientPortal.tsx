@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, CalendarPlus, LogOut, Mail, Sparkles, Star } from "lucide-react";
+import { Calendar, CalendarPlus, LayoutDashboard, LogOut, Mail, ShieldCheck, Sparkles, Star } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { InlineSalonLoader } from "@/components/SalonLoader";
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { InstallAppButton } from "@/components/admin/InstallAppButton";
 import { formatCurrency, formatDisplayDate } from "@/lib/formatters";
-import { getMindfulMessage, getTimeGreeting, resolveDisplayName } from "@/lib/greetings";
+import { getMindfulMessage, getTimeGreeting, isAdminEmail, resolveDisplayName } from "@/lib/greetings";
 import { downloadAppointmentICS, getGoogleCalendarUrl } from "@/lib/icsGenerator";
 import { useBusinessConfig } from "@/hooks/useSalonData";
 import { supabase } from "@/supabase";
@@ -30,6 +30,7 @@ const ClientPortal = () => {
   const { data: config } = useBusinessConfig();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [mindfulQuote] = useState<string>(() => getMindfulMessage());
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   const [emailInput, setEmailInput] = useState("");
@@ -102,7 +103,18 @@ const ClientPortal = () => {
       applySession(data.session);
     }, hasAuthParams ? 2200 : 400);
 
-    return () => {
+    const isAdmin = isAdminEmail(userEmail);
+
+  useEffect(() => {
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    if (isAdmin) {
+      manifestLink?.setAttribute("href", "/admin-manifest.webmanifest");
+    } else {
+      manifestLink?.setAttribute("href", "/manifest.webmanifest");
+    }
+  }, [isAdmin]);
+
+  return () => {
       mounted = false;
       clearTimeout(fallbackTimer);
       subscription.unsubscribe();
@@ -176,6 +188,17 @@ const ClientPortal = () => {
     setCitas([]);
   };
 
+  const isAdmin = isAdminEmail(userEmail);
+
+  useEffect(() => {
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    if (isAdmin) {
+      manifestLink?.setAttribute("href", "/admin-manifest.webmanifest");
+    } else {
+      manifestLink?.setAttribute("href", "/manifest.webmanifest");
+    }
+  }, [isAdmin]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -191,7 +214,11 @@ const ClientPortal = () => {
               Revisa tus citas agendadas, guárdalas en tu calendario y evalúa tu experiencia.
             </p>
             <div className="pt-2 flex justify-center">
-              <InstallAppButton compact label="Descargar App Clienta" />
+              {isAdmin ? (
+                <InstallAppButton compact alwaysShow appTitle="Kiki Admin" label="Descargar App Admin" />
+              ) : (
+                <InstallAppButton compact label="Descargar App Clienta" />
+              )}
             </div>
           </div>
 
@@ -253,13 +280,39 @@ const ClientPortal = () => {
             </Card>
           ) : (
             <div className="space-y-6">
+              {isAdmin && (
+                <Card className="p-5 rounded-2xl border-2 border-primary/30 bg-primary/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-xl bg-primary text-primary-foreground shrink-0">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-serif font-semibold text-base text-foreground">
+                        Cuenta de Administración Detectada
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Tienes acceso exclusivo al tablero de agenda, finanzas y ficha de clientas.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 shrink-0">
+                    <Link to="/admin">
+                      <Button size="sm" className="rounded-xl gap-1.5">
+                        <LayoutDashboard className="w-4 h-4" /> Ir al Dashboard Admin
+                      </Button>
+                    </Link>
+                    <InstallAppButton compact alwaysShow appTitle="Kiki Admin" label="App Admin" />
+                  </div>
+                </Card>
+              )}
+
               <Card className="p-5 rounded-2xl border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <p className="text-xs text-primary font-medium">
                     {getTimeGreeting()}, {resolveDisplayName(userEmail, userName)} ✨
                   </p>
                   <p className="font-serif font-semibold text-lg mt-0.5">
-                    {getMindfulMessage()}
+                    {mindfulQuote}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">{userEmail}</p>
                 </div>

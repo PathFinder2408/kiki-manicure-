@@ -1,10 +1,27 @@
+export const ADMIN_EMAILS = [
+  "francissaant@gmail.com",
+  "kikimanicurista@gmail.com",
+];
+
 const MINDFUL_PHRASES = [
   "Hoy es un gran día para crear con calma y propósito.",
   "Respira profundo; tu tranquilidad se refleja en cada detalle.",
   "Un paso a la vez, todo fluye a tu ritmo.",
   "Tu espacio, tu ritmo, tu mejor energía.",
   "Regálate un momento de pausa entre cada atención.",
+  "Lo que haces con cariño siempre vuelve multiplicado.",
+  "Hoy elige la serenidad por encima de la prisa.",
+  "Cada detalle que cuidas habla de tu dedicación.",
+  "Confía en tu proceso; estás construyendo algo hermoso.",
+  "Tu bienestar también es prioridad hoy.",
+  "Sonríe: hoy es una nueva oportunidad para brillar.",
+  "Mantén la calma en tu mente y la magia en tus manos.",
 ];
+
+export function isAdminEmail(email?: string | null): boolean {
+  if (!email) return false;
+  return ADMIN_EMAILS.includes(email.trim().toLowerCase());
+}
 
 export function resolveDisplayName(
   email?: string | null,
@@ -30,8 +47,8 @@ export function getTimeGreeting(): string {
 }
 
 export function getMindfulMessage(): string {
-  const dayIndex = new Date().getDate() % MINDFUL_PHRASES.length;
-  return MINDFUL_PHRASES[dayIndex];
+  const idx = Math.floor(Math.random() * MINDFUL_PHRASES.length);
+  return MINDFUL_PHRASES[idx];
 }
 
 function capitalize(str: string): string {
