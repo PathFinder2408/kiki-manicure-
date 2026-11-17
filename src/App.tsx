@@ -25,16 +25,15 @@ const queryClient = new QueryClient();
 
 class RouteErrorBoundary extends Component<
   { children: ReactNode },
-  { hasError: boolean }
+  { hasError: boolean; errorMessage: string }
 > {
-  state = { hasError: false };
+  state = { hasError: false, errorMessage: "" };
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, errorMessage: error?.message || "Error inesperado" };
   }
 
   componentDidCatch(error: Error, _info: ErrorInfo) {
-    // Si falló un chunk tras un despliegue nuevo en Vercel, recarga una vez limpio
     if (error.message?.includes("Failed to fetch dynamically imported module")) {
       const reloaded = sessionStorage.getItem("kiki_chunk_reload");
       if (!reloaded) {
@@ -53,11 +52,19 @@ class RouteErrorBoundary extends Component<
           </p>
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              sessionStorage.removeItem("kiki_chunk_reload");
+              window.location.reload();
+            }}
             className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
           >
             Recargar página
           </button>
+          {this.state.errorMessage && (
+            <p className="text-[11px] text-muted-foreground max-w-md opacity-70">
+              {this.state.errorMessage}
+            </p>
+          )}
         </div>
       );
     }
