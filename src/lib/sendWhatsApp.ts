@@ -1,12 +1,9 @@
 /**
- * Envía notificación por WhatsApp usando CallMeBot API (gratis).
- * El mensaje se envía al número del negocio (Kiki) cuando una clienta agenda.
- *
- * Requisito: el número debe haber enviado "I allow callmebot to send me messages"
- * al +34 644 31 98 27 en WhatsApp.
+ * Envía notificación por WhatsApp a través de nuestra Vercel Serverless Function (/api/notify-whatsapp),
+ * manteniendo las credenciales de CallMeBot seguras en el servidor.
  */
 
-interface BookingNotification {
+export interface BookingNotification {
   nombre: string;
   servicio: string;
   fecha: string;
@@ -14,37 +11,23 @@ interface BookingNotification {
   telefono: string;
 }
 
-export async function sendWhatsAppNotification(data: BookingNotification): Promise<void> {
-  const phone = import.meta.env.VITE_CALLMEBOT_PHONE;
-  const apiKey = import.meta.env.VITE_CALLMEBOT_API_KEY;
-
-  if (!phone || !apiKey) {
-    console.warn('[WhatsApp] Credenciales de CallMeBot no configuradas en .env');
-    return;
-  }
-
-  const message = [
-    '📅 *Nueva Cita Agendada!*',
-    '',
-    `👤 *Cliente:* ${data.nombre}`,
-    `💅 *Servicio:* ${data.servicio}`,
-    `📆 *Fecha:* ${data.fecha}`,
-    `🕐 *Hora:* ${data.hora}`,
-    `📱 *Teléfono:* ${data.telefono}`,
-    '',
-    '✨ _Kiki Manicure_',
-  ].join('\n');
-
-  const encodedMessage = encodeURIComponent(message);
-  const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodedMessage}&apikey=${apiKey}`;
-
+export async function sendWhatsAppNotification(data: BookingNotification): Promise<boolean> {
   try {
-    // CallMeBot no soporta CORS, usamos no-cors.
-    // El mensaje se envía igualmente aunque no podamos leer la respuesta.
-    await fetch(url, { mode: 'no-cors' });
-    console.log('[WhatsApp] Notificación enviada exitosamente');
+    const response = await fetch("/api/notify-whatsapp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      console.warn("[WhatsApp] El servidor no pudo enviar la notificación:", response.status);
+      return false;
+    }
+
+    return true;
   } catch (error) {
-    // No bloquear la reserva si falla el WhatsApp
-    console.warn('[WhatsApp] Error al enviar notificación:', error);
+    // No bloquear la reserva si falla la notificación
+    console.warn("[WhatsApp] Error de red al notificar:", error);
+    return false;
   }
 }
