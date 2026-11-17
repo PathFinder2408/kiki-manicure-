@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
-import { Check, Search, XCircle, DollarSign } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  DollarSign,
+  Search,
+  XCircle,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,130 +35,196 @@ export const AdminAgendaTab = ({
   onCobrarCita,
 }: AdminAgendaTabProps) => {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [openGroups, setOpenGroups] = useState({
+    activas: true,
+    completadas: false,
+    canceladas: false,
+  });
 
   const filtered = useMemo(() => {
-    return citas.filter((c) => {
-      if (statusFilter !== "all" && c.estado !== statusFilter) return false;
-      if (!search.trim()) return true;
-      const q = search.toLowerCase();
-      return (
+    if (!search.trim()) return citas;
+    const q = search.toLowerCase();
+    return citas.filter(
+      (c) =>
         c.cliente_nombre.toLowerCase().includes(q) ||
         c.cliente_telefono.toLowerCase().includes(q) ||
         c.servicio.toLowerCase().includes(q)
-      );
-    });
-  }, [citas, search, statusFilter]);
+    );
+  }, [citas, search]);
+
+  const groups = useMemo(() => {
+    const activas = filtered
+      .filter((c) => c.estado === "pendiente" || c.estado === "confirmada")
+      .sort((a, b) => `${a.fecha}${a.hora}`.localeCompare(`${b.fecha}${b.hora}`));
+
+    const completadas = filtered
+      .filter((c) => c.estado === "completada")
+      .sort((a, b) => `${b.fecha}${b.hora}`.localeCompare(`${a.fecha}${a.hora}`));
+
+    const canceladas = filtered
+      .filter((c) => c.estado === "cancelada" || c.estado === "no_asistio")
+      .sort((a, b) => `${b.fecha}${b.hora}`.localeCompare(`${a.fecha}${a.hora}`));
+
+    return { activas, completadas, canceladas };
+  }, [filtered]);
+
+  const toggleGroup = (key: keyof typeof openGroups) => {
+    setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const renderCompactRow = (cita: Cita) => (
+    <div
+      key={cita.id}
+      className="px-3.5 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2 hover:bg-muted/20 transition-colors"
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+        <span className="text-xs font-semibold tabular-nums text-primary bg-primary/10 px-2 py-0.5 rounded-md shrink-0">
+          {formatDisplayDate(cita.fecha)} · {cita.hora.slice(0, 5)}
+        </span>
+
+        <span
+          className={`text-[11px] px-2 py-0.5 rounded-full font-medium capitalize shrink-0 ${
+            STATUS_BADGE[cita.estado] ?? "bg-muted"
+          }`}
+        >
+          {cita.estado.replace("_", " ")}
+        </span>
+
+        <span className="font-medium text-sm truncate">{cita.cliente_nombre}</span>
+        <span className="text-xs text-muted-foreground truncate">
+          {cita.servicio} · {cita.cliente_telefono}
+        </span>
+        {cita.precio_acordado > 0 && (
+          <span className="text-xs font-semibold tabular-nums text-foreground">
+            {formatCurrency(cita.precio_acordado, moneda)}
+          </span>
+        )}
+        {cita.notas && (
+          <span className="text-[11px] italic text-muted-foreground truncate max-w-xs">
+            ({cita.notas})
+          </span>
+        )}
+      </div>
+
+      {(cita.estado === "pendiente" || cita.estado === "confirmada") && (
+        <div className="flex items-center gap-1.5 shrink-0">
+          {cita.estado === "pendiente" && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2.5 text-xs rounded-lg gap-1"
+              onClick={() => onUpdateEstado(cita.id, "confirmada")}
+            >
+              <Check className="w-3 h-3" /> Confirmar
+            </Button>
+          )}
+          <Button
+            size="sm"
+            className="h-7 px-2.5 text-xs rounded-lg gap-1"
+            onClick={() => onCobrarCita(cita)}
+          >
+            <DollarSign className="w-3 h-3" /> Cobrar
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-xs rounded-lg text-destructive hover:text-destructive"
+            onClick={() => onUpdateEstado(cita.id, "cancelada")}
+            title="Cancelar cita"
+          >
+            <XCircle className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderSection = (
+    key: keyof typeof openGroups,
+    title: string,
+    items: Cita[],
+    badgeClass: string
+  ) => {
+    const isOpen = openGroups[key];
+    return (
+      <div className="border rounded-xl overflow-hidden bg-card">
+        <button
+          type="button"
+          onClick={() => toggleGroup(key)}
+          className="w-full px-4 py-3 flex items-center justify-between bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+        >
+          <div className="flex items-center gap-2.5">
+            {isOpen ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+            <span className="font-semibold text-sm">{title}</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold tabular-nums ${badgeClass}`}>
+              {items.length}
+            </span>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {isOpen ? "Ocultar" : "Ver detalle"}
+          </span>
+        </button>
+
+        {isOpen && (
+          <div className="divide-y">
+            {items.length === 0 ? (
+              <p className="py-6 text-center text-xs text-muted-foreground">
+                No hay citas en esta categoría.
+              </p>
+            ) : (
+              items.map(renderCompactRow)
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <Card className="p-5 sm:p-6 rounded-2xl border-border/60">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <Card className="p-5 sm:p-6 rounded-2xl border-border/60 space-y-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-serif font-semibold">Gestión de Agenda</h2>
           <p className="text-xs text-muted-foreground">
-            Confirma reservas, cancela espacios o cobra citas completadas en 1 clic.
+            Vista compacta agrupada por estado. Haz clic en cada sección para expandir o comprimir.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="relative">
-            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-            <Input
-              placeholder="Buscar clienta o teléfono..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 rounded-xl w-full sm:w-64"
-            />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl border bg-background text-sm"
-          >
-            <option value="all">Todos los estados</option>
-            <option value="pendiente">Pendientes</option>
-            <option value="confirmada">Confirmadas</option>
-            <option value="completada">Completadas</option>
-            <option value="cancelada">Canceladas</option>
-          </select>
+        <div className="relative">
+          <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+          <Input
+            placeholder="Buscar clienta, teléfono o servicio..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 rounded-xl w-full sm:w-72"
+          />
         </div>
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="py-12 text-center text-sm text-muted-foreground border border-dashed rounded-xl">
-          No se encontraron citas con ese criterio.
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((cita) => (
-            <div
-              key={cita.id}
-              className="p-4 rounded-xl border bg-card flex flex-col lg:flex-row lg:items-center justify-between gap-4"
-            >
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold text-sm tabular-nums text-primary">
-                    {formatDisplayDate(cita.fecha)} · {cita.hora.slice(0, 5)}
-                  </span>
-                  <span
-                    className={`text-xs px-2.5 py-0.5 rounded-full font-medium capitalize ${
-                      STATUS_BADGE[cita.estado] ?? "bg-muted"
-                    }`}
-                  >
-                    {cita.estado.replace("_", " ")}
-                  </span>
-                  {cita.precio_acordado > 0 && (
-                    <span className="text-xs font-semibold tabular-nums text-muted-foreground">
-                      {formatCurrency(cita.precio_acordado, moneda)}
-                    </span>
-                  )}
-                </div>
-                <p className="font-medium">{cita.cliente_nombre}</p>
-                <p className="text-xs text-muted-foreground">
-                  {cita.servicio} · {cita.cliente_telefono} · {cita.cliente_email}
-                </p>
-                {cita.notas && (
-                  <p className="text-xs italic text-muted-foreground">Nota: {cita.notas}</p>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {cita.estado === "pendiente" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="rounded-xl gap-1"
-                    onClick={() => onUpdateEstado(cita.id, "confirmada")}
-                  >
-                    <Check className="w-3.5 h-3.5" /> Confirmar
-                  </Button>
-                )}
-
-                {(cita.estado === "pendiente" || cita.estado === "confirmada") && (
-                  <>
-                    <Button
-                      size="sm"
-                      className="rounded-xl gap-1"
-                      onClick={() => onCobrarCita(cita)}
-                    >
-                      <DollarSign className="w-3.5 h-3.5" /> Cobrar y Cerrar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="rounded-xl text-destructive hover:text-destructive gap-1"
-                      onClick={() => onUpdateEstado(cita.id, "cancelada")}
-                    >
-                      <XCircle className="w-3.5 h-3.5" /> Cancelar
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="space-y-3">
+        {renderSection(
+          "activas",
+          "Pendientes y Confirmadas (Por atender)",
+          groups.activas,
+          "bg-amber-100 text-amber-800"
+        )}
+        {renderSection(
+          "completadas",
+          "Realizadas (Completadas)",
+          groups.completadas,
+          "bg-green-100 text-green-800"
+        )}
+        {renderSection(
+          "canceladas",
+          "Canceladas / No asistió",
+          groups.canceladas,
+          "bg-red-100 text-red-700"
+        )}
+      </div>
     </Card>
   );
 };
