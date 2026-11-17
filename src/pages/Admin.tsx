@@ -1,365 +1,343 @@
-import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Calendar, DollarSign, Users, TrendingUp, LogOut, Plus, X } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import { supabase } from "@/supabase";
-import { toast } from "sonner";
-import { ImageIcon, Upload } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getLocalDateString, getFirstDayOfMonth } from "@/lib/dateUtils";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  Calendar,
+  DollarSign,
+  ExternalLink,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Sparkles,
+  Users,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { AdminAgendaTab } from "@/components/admin/AdminAgendaTab";
+import { AdminCatalogTab } from "@/components/admin/AdminCatalogTab";
+import { AdminClientsTab } from "@/components/admin/AdminClientsTab";
+import { AdminFinanceTab } from "@/components/admin/AdminFinanceTab";
+import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab";
+import { AdminSettingsTab } from "@/components/admin/AdminSettingsTab";
+import { CobrarCitaModal } from "@/components/admin/CobrarCitaModal";
+import { useBusinessConfig, useServices } from "@/hooks/useSalonData";
+import { getFirstDayOfMonth, getLocalDateString } from "@/lib/dateUtils";
+import { supabase } from "@/supabase";
+import type {
+  Cita,
+  CitaEstado,
+  Finanza,
+  MetodoPago,
+  PortafolioItem,
+  TipoMovimiento,
+} from "@/types/salon";
+
+type AdminTab = "overview" | "agenda" | "finances" | "clients" | "catalog" | "settings";
+
+const NAV_ITEMS: { id: AdminTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "overview", label: "Resumen", icon: LayoutDashboard },
+  { id: "agenda", label: "Agenda", icon: Calendar },
+  { id: "finances", label: "Finanzas", icon: DollarSign },
+  { id: "clients", label: "Clientas", icon: Users },
+  { id: "catalog", label: "Catálogo", icon: Sparkles },
+  { id: "settings", label: "Negocio", icon: Settings },
+];
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [citas, setCitas] = useState<any[]>([]);
-  const [finanzas, setFinanzas] = useState<any[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    tipo: "ingreso",
-    descripcion: "",
-    monto: "",
-    fecha: getLocalDateString(),
-  });
+  const queryClient = useQueryClient();
 
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const [citas, setCitas] = useState<Cita[]>([]);
+  const [finanzasMes, setFinanzasMes] = useState<Finanza[]>([]);
+  const [portafolio, setPortafolio] = useState<PortafolioItem[]>([]);
+  const [citaToCharge, setCitaToCharge] = useState<Cita | null>(null);
 
-const [showPortafolioForm, setShowPortafolioForm] = useState(false);
-const [portafolioData, setPortafolioData] = useState({
-  titulo: "",
-  categoria: "gel",
-  descripcion: "",
-});
-const [selectedFile, setSelectedFile] = useState<File | null>(null);
-const [uploading, setUploading] = useState(false);
+  const { data: servicios = [] } = useServices(false);
+  const { data: config } = useBusinessConfig();
+  const moneda = config?.moneda ?? "CLP";
+
+  const fetchCitas = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("citas")
+      .select("*")
+      .order("fecha", { ascending: false })
+      .order("hora", { ascending: true })
+      .limit(200);
+    if (!error && data) setCitas(data as Cita[]);
+  }, []);
+
+  const fetchFinanzas = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("finanzas")
+      .select("*")
+      .gte("fecha", getFirstDayOfMonth())
+      .order("fecha", { ascending: false });
+    if (!error && data) setFinanzasMes(data as Finanza[]);
+  }, []);
+
+  const fetchPortafolio = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("portafolio")
+      .select("*")
+      .order("id", { ascending: false });
+    if (!error && data) setPortafolio(data as PortafolioItem[]);
+  }, []);
 
   useEffect(() => {
     fetchCitas();
     fetchFinanzas();
-  }, []);
+    fetchPortafolio();
+  }, [fetchCitas, fetchFinanzas, fetchPortafolio]);
 
-  const fetchCitas = async () => {
+  const citasHoy = useMemo(() => {
     const hoy = getLocalDateString();
-    const { data } = await supabase
+    return citas
+      .filter((c) => c.fecha === hoy)
+      .sort((a, b) => a.hora.localeCompare(b.hora));
+  }, [citas]);
+
+  const handleUpdateEstado = async (citaId: number, estado: CitaEstado) => {
+    const { error } = await supabase
       .from("citas")
-      .select("*")
-      .eq("fecha", hoy)
-      .order("hora");
-    if (data) setCitas(data);
-  };
-
-  const fetchFinanzas = async () => {
-    const { data } = await supabase
-      .from("finanzas")
-      .select("*")
-      .gte("fecha", getFirstDayOfMonth());
-    if (data) setFinanzas(data);
-  };
-
-  const handleRegistrarMovimiento = async () => {
-    if (!formData.descripcion || !formData.monto) {
-      toast.error("Completa todos los campos");
-      return;
-    }
-
-    const { error } = await supabase.from("finanzas").insert({
-      tipo: formData.tipo,
-      descripcion: formData.descripcion,
-      monto: parseInt(formData.monto),
-      fecha: formData.fecha,
-    });
+      .update({ estado })
+      .eq("id", citaId);
 
     if (error) {
-      toast.error("Error al registrar");
+      toast.error("No se pudo actualizar el estado");
       return;
     }
 
-    toast.success(`${formData.tipo === "ingreso" ? "Ingreso" : "Egreso"} registrado exitosamente`);
-    setFormData({ tipo: "ingreso", descripcion: "", monto: "", fecha: getLocalDateString() });
-    setShowForm(false);
+    toast.success(`Cita marcada como ${estado}`);
+    fetchCitas();
+  };
+
+  const handleCobrarConfirm = async (
+    cita: Cita,
+    monto: number,
+    metodoPago: MetodoPago
+  ) => {
+    const { error: finError } = await supabase.from("finanzas").insert({
+      tipo: "ingreso",
+      descripcion: `Cita: ${cita.cliente_nombre} (${cita.servicio})`,
+      monto,
+      fecha: getLocalDateString(),
+      categoria: "servicios",
+      metodo_pago: metodoPago,
+      cita_id: cita.id,
+    });
+
+    if (finError) {
+      toast.error("Error al registrar el ingreso en caja");
+      return;
+    }
+
+    const { error: citaError } = await supabase
+      .from("citas")
+      .update({ estado: "completada", precio_acordado: monto })
+      .eq("id", cita.id);
+
+    if (citaError) {
+      toast.error("Ingreso guardado, pero falló al cerrar la cita");
+    } else {
+      toast.success("¡Cita cerrada y cobro registrado en Finanzas!");
+    }
+
+    fetchCitas();
     fetchFinanzas();
   };
 
-  const ingresos = finanzas.filter((f) => f.tipo === "ingreso").reduce((sum, f) => sum + f.monto, 0);
-  const egresos = finanzas.filter((f) => f.tipo === "egreso").reduce((sum, f) => sum + f.monto, 0);
+  const handleAddMovimiento = async (payload: {
+    tipo: TipoMovimiento;
+    descripcion: string;
+    monto: number;
+    fecha: string;
+    categoria: string;
+    metodo_pago: MetodoPago;
+  }): Promise<boolean> => {
+    const { error } = await supabase.from("finanzas").insert(payload);
+    if (error) {
+      toast.error("Error al registrar movimiento");
+      return false;
+    }
+    toast.success("Movimiento registrado");
+    fetchFinanzas();
+    return true;
+  };
 
-  const handleSubirFoto = async () => {
-  if (!selectedFile || !portafolioData.titulo) {
-    toast.error("Selecciona una foto y agrega un título");
-    return;
-  }
-
-  setUploading(true);
-
-  const fileExt = selectedFile.name.split(".").pop();
-  const fileName = `${Date.now()}.${fileExt}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("Portafolio")
-    .upload(fileName, selectedFile);
-
-  if (uploadError) {
-    toast.error("Error al subir la imagen");
-    setUploading(false);
-    return;
-  }
-
-  const { data: urlData } = supabase.storage
-    .from("Portafolio")
-    .getPublicUrl(fileName);
-
-  const { error: dbError } = await supabase.from("portafolio").insert({
-    titulo: portafolioData.titulo,
-    categoria: portafolioData.categoria,
-    descripcion: portafolioData.descripcion,
-    imagen_url: urlData.publicUrl,
-  });
-
-  if (dbError) {
-    toast.error("Error al guardar en base de datos");
-    setUploading(false);
-    return;
-  }
-
-  toast.success("¡Foto subida al portafolio!");
-  setPortafolioData({ titulo: "", categoria: "gel", descripcion: "" });
-  setSelectedFile(null);
-  setShowPortafolioForm(false);
-  setUploading(false);
-};
+  const handleDeleteMovimiento = async (id: number) => {
+    const { error } = await supabase.from("finanzas").delete().eq("id", id);
+    if (error) {
+      toast.error("Error al eliminar movimiento");
+      return;
+    }
+    toast.success("Movimiento eliminado");
+    fetchFinanzas();
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    toast.success("Sesión cerrada");
     navigate("/login");
   };
 
-  const stats = [
-    { title: "Citas Hoy", value: citas.length.toString(), change: "Hoy", icon: Calendar },
-    { title: "Ingresos del Mes", value: `$${ingresos.toLocaleString("es-CL")}`, change: "Este mes", icon: DollarSign },
-    { title: "Egresos del Mes", value: `$${egresos.toLocaleString("es-CL")}`, change: "Este mes", icon: Users },
-    { title: "Utilidad Neta", value: `$${(ingresos - egresos).toLocaleString("es-CL")}`, change: "Este mes", icon: TrendingUp },
-  ];
-
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="pt-24 pb-20 px-4">
-        <div className="container mx-auto max-w-7xl">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+      {/* Sidebar Desktop */}
+      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 border-r bg-card px-4 py-6 justify-between">
+        <div>
+          <div className="px-2 mb-8">
+            <p className="font-serif font-bold text-xl text-foreground">
+              {config?.nombre_salon ?? "Kiki Manicure"}
+            </p>
+            <p className="text-xs text-muted-foreground">Panel de Gestión & Finanzas</p>
+          </div>
 
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-serif font-bold mb-2">Panel de Administración</h1>
-              <p className="text-muted-foreground text-sm md:text-base">Gestiona tu negocio de manera eficiente</p>
-            </div>
-            <Button variant="destructive" size="lg" onClick={handleLogout} className="w-full sm:w-auto">
-              <LogOut className="mr-2 h-5 w-5" />
-              Cerrar Sesión
+          <nav className="space-y-1">
+            {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+              const active = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setActiveTab(id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    active
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="space-y-2 pt-4 border-t">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2 rounded-xl"
+            onClick={() => navigate("/")}
+          >
+            <ExternalLink className="w-4 h-4" /> Ver Web Pública
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 rounded-xl text-destructive hover:text-destructive"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4" /> Cerrar Sesión
+          </Button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
+        {/* Topbar Móvil y Header */}
+        <header className="sticky top-0 z-20 bg-background/90 backdrop-blur border-b px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="font-serif font-bold text-lg sm:text-xl">
+              {NAV_ITEMS.find((n) => n.id === activeTab)?.label}
+            </h1>
+            <p className="text-xs text-muted-foreground hidden sm:block">
+              {config?.nombre_salon ?? "Kiki Manicure"} · Monitoreo en tiempo real
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 lg:hidden">
+            <Button variant="outline" size="sm" onClick={() => navigate("/")} className="rounded-xl">
+              Web
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleLogout} title="Cerrar sesión">
+              <LogOut className="w-4 h-4 text-destructive" />
             </Button>
           </div>
+        </header>
 
-          {/* Stats */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {stats.map((stat, i) => (
-              <Card key={i} className="p-6 border-2 border-border bg-gradient-card">
-                <div className="p-3 rounded-2xl bg-muted mb-4 w-fit">
-                  <stat.icon className="h-6 w-6" />
-                </div>
-                <h3 className="text-sm text-muted-foreground mb-1">{stat.title}</h3>
-                <p className="text-3xl font-bold mb-1">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.change}</p>
-              </Card>
-            ))}
-          </div>
-
-          {/* Citas de hoy */}
-          <Card className="p-6 border-2 border-border bg-gradient-card mb-12">
-            <h2 className="text-2xl font-serif font-bold mb-6">Citas de Hoy</h2>
-            {citas.length === 0 ? (
-              <p className="text-muted-foreground">No hay citas para hoy.</p>
-            ) : (
-              <div className="space-y-4">
-                {citas.map((cita) => (
-                  <div key={cita.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl bg-muted/50 border border-border gap-4">
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
-                      <div className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-primary/10 text-primary font-bold text-sm shrink-0">
-                        {cita.hora.slice(0, 5)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold truncate">{cita.cliente_nombre}</p>
-                        <p className="text-sm text-muted-foreground truncate">{cita.servicio}</p>
-                        <p className="text-xs text-muted-foreground">{cita.cliente_telefono}</p>
-                      </div>
-                    </div>
-                    <span className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary font-medium w-fit">
-                      {cita.estado}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-
-          {/* Finanzas */}
-          <Card className="p-6 border-2 border-border bg-gradient-card">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <h2 className="text-xl md:text-2xl font-serif font-bold">Resumen Financiero del Mes</h2>
-              <Button onClick={() => setShowForm(!showForm)} variant="default" size="sm" className="w-full sm:w-auto">
-                {showForm ? <X className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
-                {showForm ? "Cancelar" : "Registrar Movimiento"}
-              </Button>
-            </div>
-
-            {/* Formulario */}
-            {showForm && (
-              <Card className="p-6 mb-6 border-2 border-primary/30 bg-muted/30">
-                <h3 className="font-semibold mb-4">Nuevo Movimiento</h3>
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <Label className="mb-2 block">Tipo</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={formData.tipo === "ingreso" ? "default" : "outline"}
-                        onClick={() => setFormData({ ...formData, tipo: "ingreso" })}
-                        className="flex-1"
-                      >
-                        Ingreso
-                      </Button>
-                      <Button
-                        variant={formData.tipo === "egreso" ? "destructive" : "outline"}
-                        onClick={() => setFormData({ ...formData, tipo: "egreso" })}
-                        className="flex-1"
-                      >
-                        Egreso
-                      </Button>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="mb-2 block">Fecha</Label>
-                    <Input
-                      type="date"
-                      value={formData.fecha}
-                      onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-2 block">Descripción</Label>
-                    <Input
-                      placeholder="Ej: Gel UV Premium - Cliente"
-                      value={formData.descripcion}
-                      onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-2 block">Monto ($)</Label>
-                    <Input
-                      type="number"
-                      placeholder="25000"
-                      value={formData.monto}
-                      onChange={(e) => setFormData({ ...formData, monto: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <Button onClick={handleRegistrarMovimiento} className="w-full" size="lg">
-                  Guardar Movimiento
-                </Button>
-              </Card>
-            )}
-
-            {/* Totales */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-4 rounded-xl bg-muted/50">
-                <span className="text-muted-foreground">Ingresos</span>
-                <span className="text-2xl font-bold text-primary">${ingresos.toLocaleString("es-CL")}</span>
-              </div>
-              <div className="flex justify-between items-center p-4 rounded-xl bg-muted/50">
-                <span className="text-muted-foreground">Egresos</span>
-                <span className="text-2xl font-bold text-destructive">${egresos.toLocaleString("es-CL")}</span>
-              </div>
-              <div className="flex justify-between items-center p-4 rounded-xl bg-primary/10 border-2 border-primary">
-                <span className="font-semibold">Utilidad Neta</span>
-                <span className="text-2xl font-bold text-primary">${(ingresos - egresos).toLocaleString("es-CL")}</span>
-              </div>
-            </div>
-            {/* Portafolio */}
-<Card className="p-6 border-2 border-border bg-gradient-card mt-8">
-  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-    <h2 className="text-xl md:text-2xl font-serif font-bold">Subir al Portafolio</h2>
-    <Button onClick={() => setShowPortafolioForm(!showPortafolioForm)} variant="default" size="sm" className="w-full sm:w-auto">
-      {showPortafolioForm ? <X className="mr-2 h-4 w-4" /> : <ImageIcon className="mr-2 h-4 w-4" />}
-      {showPortafolioForm ? "Cancelar" : "Subir Foto"}
-    </Button>
-  </div>
-
-  {showPortafolioForm && (
-    <div className="space-y-4">
-      <div>
-        <Label className="mb-2 block">Título</Label>
-        <Input
-          placeholder="Ej: Gel UV Rosa Pastel"
-          value={portafolioData.titulo}
-          onChange={(e) => setPortafolioData({ ...portafolioData, titulo: e.target.value })}
-        />
-      </div>
-      <div>
-        <Label className="mb-2 block">Categoría</Label>
-        <div className="flex gap-2">
-          {["gel", "acrylic", "spa"].map((cat) => (
-            <Button
-              key={cat}
-              variant={portafolioData.categoria === cat ? "default" : "outline"}
-              onClick={() => setPortafolioData({ ...portafolioData, categoria: cat })}
-              size="sm"
+        {/* Navegación móvil horizontal */}
+        <div className="lg:hidden border-b bg-card px-4 py-2 flex gap-2 overflow-x-auto">
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                activeTab === id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
             >
-              {cat === "gel" ? "Uñas Gel" : cat === "acrylic" ? "Acrílico" : "Spa"}
-            </Button>
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+            </button>
           ))}
         </div>
-      </div>
-      <div>
-        <Label className="mb-2 block">Descripción (opcional)</Label>
-        <Input
-          placeholder="Ej: Diseño primaveral con flores"
-          value={portafolioData.descripcion}
-          onChange={(e) => setPortafolioData({ ...portafolioData, descripcion: e.target.value })}
-        />
-      </div>
-      <div>
-        <Label className="mb-2 block">Foto</Label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-          className="w-full p-3 rounded-xl border-2 border-border bg-background text-sm"
-        />
-      </div>
-      <Button onClick={handleSubirFoto} className="w-full" size="lg" disabled={uploading}>
-        <Upload className="mr-2 h-4 w-4" />
-        {uploading ? "Subiendo..." : "Publicar en Portafolio"}
-      </Button>
-    </div>
-  )}
-</Card>
 
-            {/* Últimos movimientos */}
-            <div className="mt-6">
-              <h3 className="font-semibold mb-3">Últimos movimientos</h3>
-              <div className="space-y-2">
-                {finanzas.slice(-5).reverse().map((f) => (
-                  <div key={f.id} className="flex justify-between items-center p-3 rounded-lg bg-muted/30 text-sm">
-                    <span className="text-muted-foreground">{f.descripcion}</span>
-                    <span className={f.tipo === "ingreso" ? "text-primary font-semibold" : "text-destructive font-semibold"}>
-                      {f.tipo === "ingreso" ? "+" : "-"}${f.monto.toLocaleString("es-CL")}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card>
+        <main className="p-4 sm:p-8 max-w-7xl w-full mx-auto">
+          {activeTab === "overview" && (
+            <AdminOverviewTab
+              citasHoy={citasHoy}
+              finanzasMes={finanzasMes}
+              moneda={moneda}
+              onCobrarCita={setCitaToCharge}
+              onGoToAgenda={() => setActiveTab("agenda")}
+            />
+          )}
 
-        </div>
-      </main>
+          {activeTab === "agenda" && (
+            <AdminAgendaTab
+              citas={citas}
+              moneda={moneda}
+              onUpdateEstado={handleUpdateEstado}
+              onCobrarCita={setCitaToCharge}
+            />
+          )}
+
+          {activeTab === "finances" && (
+            <AdminFinanceTab
+              finanzas={finanzasMes}
+              moneda={moneda}
+              onAddMovimiento={handleAddMovimiento}
+              onDeleteMovimiento={handleDeleteMovimiento}
+            />
+          )}
+
+          {activeTab === "clients" && (
+            <AdminClientsTab citas={citas} moneda={moneda} />
+          )}
+
+          {activeTab === "catalog" && (
+            <AdminCatalogTab
+              servicios={servicios}
+              portafolio={portafolio}
+              moneda={moneda}
+              onRefreshServicios={() =>
+                queryClient.invalidateQueries({ queryKey: ["servicios"] })
+              }
+              onRefreshPortafolio={fetchPortafolio}
+            />
+          )}
+
+          {activeTab === "settings" && config && (
+            <AdminSettingsTab
+              config={config}
+              onSaved={() =>
+                queryClient.invalidateQueries({ queryKey: ["negocio_config"] })
+              }
+            />
+          )}
+        </main>
+      </div>
+
+      <CobrarCitaModal
+        cita={citaToCharge}
+        onClose={() => setCitaToCharge(null)}
+        onConfirm={handleCobrarConfirm}
+      />
     </div>
   );
 };
