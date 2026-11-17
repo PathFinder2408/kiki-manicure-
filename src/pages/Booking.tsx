@@ -81,12 +81,25 @@ const Booking = () => {
     register,
     handleSubmit,
     getValues,
+    setValue,
     reset: resetForm,
     formState: { errors },
   } = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: { name: "", phone: "", email: "", notes: "" },
   });
+
+  // Autocompletar nombre y correo si la clienta inició sesión con Google / Email
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const user = data.session?.user;
+      if (user) {
+        const fullName = (user.user_metadata?.full_name as string) || "";
+        if (fullName && !getValues("name")) setValue("name", fullName);
+        if (user.email && !getValues("email")) setValue("email", user.email);
+      }
+    });
+  }, [getValues, setValue]);
 
   // Pre-selección si llega desde /servicios?servicio=...
   useEffect(() => {

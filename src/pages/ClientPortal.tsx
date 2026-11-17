@@ -49,11 +49,20 @@ const ClientPortal = () => {
   useEffect(() => {
     let mounted = true;
     const url = new URL(window.location.href);
+    const oauthError =
+      url.searchParams.get("error_description") || url.searchParams.get("error");
     const hasAuthParams =
       url.searchParams.has("code") ||
       window.location.hash.includes("access_token=");
 
-    const applySession = (session: { user?: { email?: string; user_metadata?: Record<string, unknown> } } | null) => {
+    if (oauthError) {
+      toast.error(`Error al iniciar con Google: ${oauthError}`);
+      window.history.replaceState({}, document.title, "/mi-agenda");
+    }
+
+    const applySession = (
+      session: { user?: { email?: string; user_metadata?: Record<string, unknown> } } | null
+    ) => {
       if (!mounted) return;
       const user = session?.user;
       setUserEmail(user?.email ?? null);
@@ -65,6 +74,7 @@ const ClientPortal = () => {
       if (user) {
         loadMyAppointments();
         if (hasAuthParams) {
+          toast.success("¡Bienvenida! Sesión iniciada correctamente");
           window.history.replaceState({}, document.title, "/mi-agenda");
         }
       }
@@ -73,36 +83,26 @@ const ClientPortal = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      applySession(session);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
+        if (session || !hasAuthParams) {
+          applySession(session);
+        }
+      } else if (event === "SIGNED_OUT") {
+        applySession(null);
+      }
     });
 
-    const init = async () => {
-      const code = url.searchParams.get("code");
-      if (code) {
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error && data.session) {
-          applySession(data.session);
-          return;
-        }
-      }
-
+    // Respaldo por si INITIAL_SESSION no se dispara a tiempo
+    const fallbackTimer = setTimeout(async () => {
+      if (!mounted) return;
       const { data } = await supabase.auth.getSession();
-      // Si hay tokens en la URL esperando ser procesados, esperamos a onAuthStateChange
-      if (!data.session && hasAuthParams) {
-        setTimeout(async () => {
-          const retry = await supabase.auth.getSession();
-          applySession(retry.data.session);
-        }, 1200);
-        return;
-      }
       applySession(data.session);
-    };
-
-    init();
+    }, hasAuthParams ? 2200 : 400);
 
     return () => {
       mounted = false;
+      clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
   }, [loadMyAppointments]);
