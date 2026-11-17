@@ -1,14 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, Menu, Sparkles, User } from "lucide-react";
+import { Calendar, Menu, ShieldCheck, Sparkles, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { InstallAppButton } from "@/components/admin/InstallAppButton";
 import { useSmartNavbar } from "@/hooks/useMotionEffects";
+import { isAdminEmail, resolveDisplayName } from "@/lib/greetings";
+import { supabase } from "@/supabase";
 
 const Navbar = () => {
   const { isVisible, isAtTop } = useSmartNavbar();
   const [open, setOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
+
+  useEffect(() => {
+    const syncUser = (
+      session: { user?: { email?: string; user_metadata?: Record<string, unknown> } } | null
+    ) => {
+      const u = session?.user;
+      setUserEmail(u?.email ?? null);
+      setUserName((u?.user_metadata?.full_name as string) || "");
+    };
+
+    supabase.auth.getSession().then(({ data }) => syncUser(data.session));
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => syncUser(session));
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const isAdmin = isAdminEmail(userEmail);
+  const displayName = resolveDisplayName(userEmail, userName);
 
   const navLinks = [
     { to: "/agendar", label: "Agendar Cita" },
@@ -34,7 +58,7 @@ const Navbar = () => {
             </span>
           </Link>
 
-          {/* Desktop Nav (100% orientado a clientas, sin acceso admin visible) */}
+          {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-7">
             {navLinks.map((item) => (
               <Link
@@ -46,13 +70,38 @@ const Navbar = () => {
                 <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-primary rounded-full transition-all duration-300 group-hover:w-full group-hover:left-0" />
               </Link>
             ))}
-            <Link
-              to="/mi-agenda"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-background/70 hover:border-primary/40 hover:text-primary text-xs font-medium transition-colors"
-              title="Ingresar a mi cuenta"
-            >
-              <User className="h-3.5 w-3.5" /> Ingresar
-            </Link>
+
+            {userEmail ? (
+              <Link
+                to={isAdmin ? "/admin" : "/mi-agenda"}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
+                  isAdmin
+                    ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
+                    : "border-accent/40 bg-accent/15 text-foreground hover:border-primary/40"
+                }`}
+                title={isAdmin ? "Ir al Dashboard Admin" : "Ir a Mi Agenda"}
+              >
+                {isAdmin ? (
+                  <>
+                    <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                    <span>Admin · {displayName}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3.5 w-3.5 text-accent" />
+                    <span>Hola, {displayName} ✨</span>
+                  </>
+                )}
+              </Link>
+            ) : (
+              <Link
+                to="/mi-agenda"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-background/70 hover:border-primary/40 hover:text-primary text-xs font-medium transition-colors"
+                title="Ingresar a mi cuenta"
+              >
+                <User className="h-3.5 w-3.5" /> Ingresar
+              </Link>
+            )}
           </div>
 
           {/* Mobile Nav */}
@@ -83,9 +132,17 @@ const Navbar = () => {
                     <SheetTitle className="font-serif flex items-center gap-2 text-primary text-xl">
                       <Sparkles className="w-4 h-4 text-accent" /> Kiki Spa
                     </SheetTitle>
-                    <p className="text-xs text-muted-foreground">
-                      Belleza, cuidado y bienestar en cada detalle
-                    </p>
+                    {userEmail ? (
+                      <p className="text-xs font-medium text-primary">
+                        {isAdmin
+                          ? `Admin · ${displayName}`
+                          : `Bienvenida, ${displayName} ✨`}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Belleza, cuidado y bienestar en cada detalle
+                      </p>
+                    )}
                   </SheetHeader>
 
                   <div className="flex flex-col gap-1.5 mt-5">
@@ -106,13 +163,28 @@ const Navbar = () => {
                         {item.label}
                       </Link>
                     ))}
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setOpen(false)}
+                        className="px-3.5 py-2.5 rounded-2xl text-sm font-semibold text-primary bg-primary/10 flex items-center gap-2 mt-1"
+                      >
+                        <ShieldCheck className="w-4 h-4" /> Dashboard Admin
+                      </Link>
+                    )}
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-border/60 space-y-2">
-                  <InstallAppButton label="Descargar App Kiki Spa" />
+                  {isAdmin ? (
+                    <InstallAppButton alwaysShow appTitle="Kiki Admin" label="Descargar App Admin" />
+                  ) : (
+                    <InstallAppButton label="Descargar App Kiki Spa" />
+                  )}
                   <p className="text-[11px] text-center text-muted-foreground">
-                    Agenda y revisa tus citas desde tu celular
+                    {isAdmin
+                      ? "Gestión exclusiva del salón"
+                      : "Agenda y revisa tus citas desde tu celular"}
                   </p>
                 </div>
               </SheetContent>
