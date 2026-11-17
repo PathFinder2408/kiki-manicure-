@@ -12,6 +12,7 @@ import Home from "./pages/Home";
 // Code Splitting: separa el Dashboard (Recharts) y rutas secundarias del bundle inicial
 const Portfolio = lazy(() => import("./pages/Portfolio"));
 const Services = lazy(() => import("./pages/Services"));
+const Blog = lazy(() => import("./pages/Blog"));
 const Booking = lazy(() => import("./pages/Booking"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Login = lazy(() => import("./pages/Login"));
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/servicios" element={<Services />} />
+            <Route path="/blog" element={<Blog />} />
             <Route path="/agendar" element={<Booking />} />
             <Route path="/login" element={<Login />} />
             <Route

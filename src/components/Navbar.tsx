@@ -32,6 +32,10 @@ const Navbar = () => {
               Servicios
               <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-primary rounded-full transition-all duration-300 group-hover:w-full group-hover:left-0" />
             </Link>
+            <Link to="/blog" className="relative text-foreground hover:text-primary transition-colors font-medium group">
+              Blog
+              <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-primary rounded-full transition-all duration-300 group-hover:w-full group-hover:left-0" />
+            </Link>
             <Link to="/agendar" className="relative text-foreground hover:text-primary transition-colors font-medium group">
               Agendar Cita
               <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-primary rounded-full transition-all duration-300 group-hover:w-full group-hover:left-0" />

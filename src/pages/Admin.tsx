@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  BookOpen,
   Calendar,
   DollarSign,
   ExternalLink,
@@ -15,13 +16,15 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { AdminAgendaTab } from "@/components/admin/AdminAgendaTab";
+import { AdminBlogTab } from "@/components/admin/AdminBlogTab";
 import { AdminCatalogTab } from "@/components/admin/AdminCatalogTab";
 import { AdminClientsTab } from "@/components/admin/AdminClientsTab";
 import { AdminFinanceTab } from "@/components/admin/AdminFinanceTab";
 import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab";
 import { AdminSettingsTab } from "@/components/admin/AdminSettingsTab";
 import { CobrarCitaModal } from "@/components/admin/CobrarCitaModal";
-import { useBusinessConfig, useServices } from "@/hooks/useSalonData";
+import { InstallAppButton } from "@/components/admin/InstallAppButton";
+import { useBlogPosts, useBusinessConfig, useServices } from "@/hooks/useSalonData";
 import { getCurrentMonthKey, getLocalDateString, getMonthBounds } from "@/lib/dateUtils";
 import { supabase } from "@/supabase";
 import type {
@@ -34,7 +37,7 @@ import type {
   TipoMovimiento,
 } from "@/types/salon";
 
-type AdminTab = "overview" | "agenda" | "finances" | "clients" | "catalog" | "settings";
+type AdminTab = "overview" | "agenda" | "finances" | "clients" | "catalog" | "blog" | "settings";
 
 const NAV_ITEMS: { id: AdminTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "overview", label: "Resumen", icon: LayoutDashboard },
@@ -42,6 +45,7 @@ const NAV_ITEMS: { id: AdminTab; label: string; icon: React.ComponentType<{ clas
   { id: "finances", label: "Finanzas", icon: DollarSign },
   { id: "clients", label: "Clientas", icon: Users },
   { id: "catalog", label: "Catálogo", icon: Sparkles },
+  { id: "blog", label: "Blog", icon: BookOpen },
   { id: "settings", label: "Negocio", icon: Settings },
 ];
 
@@ -58,6 +62,7 @@ const Admin = () => {
   const [citaToCharge, setCitaToCharge] = useState<Cita | null>(null);
 
   const { data: servicios = [] } = useServices(false);
+  const { data: blogPosts = [] } = useBlogPosts(false);
   const { data: config } = useBusinessConfig();
   const moneda = config?.moneda ?? "CLP";
 
@@ -230,6 +235,7 @@ const Admin = () => {
         </div>
 
         <div className="space-y-2 pt-4 border-t">
+          <InstallAppButton />
           <Button
             variant="outline"
             size="sm"
@@ -263,6 +269,7 @@ const Admin = () => {
           </div>
 
           <div className="flex items-center gap-2 lg:hidden">
+            <InstallAppButton compact />
             <Button variant="outline" size="sm" onClick={() => navigate("/")} className="rounded-xl">
               Web
             </Button>
@@ -342,6 +349,13 @@ const Admin = () => {
                 queryClient.invalidateQueries({ queryKey: ["servicios"] })
               }
               onRefreshPortafolio={fetchPortafolio}
+            />
+          )}
+
+          {activeTab === "blog" && (
+            <AdminBlogTab
+              posts={blogPosts}
+              onRefresh={() => queryClient.invalidateQueries({ queryKey: ["blog_posts"] })}
             />
           )}
 

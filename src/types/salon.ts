@@ -66,6 +66,18 @@ export interface Clienta {
   created_at?: string;
 }
 
+export interface BlogPost {
+  id: string;
+  slug: string;
+  titulo: string;
+  categoria: string;
+  resumen: string;
+  contenido: string;
+  dato_pro: string;
+  publicado: boolean;
+  created_at?: string;
+}
+
 export interface DaySchedule {
   activo: boolean;
   apertura: string;

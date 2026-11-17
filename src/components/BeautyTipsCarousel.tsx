@@ -1,69 +1,41 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Droplets, HeartHandshake, ShieldCheck, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useBlogPosts } from "@/hooks/useSalonData";
 
-interface BeautyTip {
-  tag: string;
-  title: string;
-  summary: string;
-  fact: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-const BEAUTY_TIPS: BeautyTip[] = [
-  {
-    tag: "Tendencia · Clean Girl",
-    title: "Efecto Glazed & Milky Nails",
-    summary:
-      "Los tonos lechosos translúcidos con acabado perlado sutil dominan la temporada por su elegancia atemporal y bajo mantenimiento.",
-    fact: "Combina con cualquier look y disimula el crecimiento natural hasta 3 semanas.",
-    icon: Sparkles,
-  },
-  {
-    tag: "Cosmetología · Hidratación",
-    title: "Aceite de Cutículas Diario",
-    summary:
-      "Aplicar aceite de jojoba o vitamina E en la matriz ungueal antes de dormir mejora la flexibilidad de la uña y evita quiebres.",
-    fact: "Una matriz hidratada prolonga la adherencia del esmaltado en gel hasta un 30%.",
-    icon: Droplets,
-  },
-  {
-    tag: "Salud Ungueal · Técnica",
-    title: "Cero Arrancado de Gel",
-    summary:
-      "Retirar el esmaltado permanente tirando de él arranca capas superficiales de queratina, debilitando la lámina por meses.",
-    fact: "El retiro profesional con torno suave o removedor protege el grosor natural.",
-    icon: ShieldCheck,
-  },
-  {
-    tag: "Spa & Bienestar · Manos",
-    title: "Protección Solar en Manos",
-    summary:
-      "La piel del dorso de las manos es una de las zonas que primero muestra fotoenvejecimiento. Usar FPS 50 diario mantiene su firmeza.",
-    fact: "En cabina aplicamos hidratación profunda con parafina y antioxidantes.",
-    icon: HeartHandshake,
-  },
-];
+const CATEGORY_LABELS: Record<string, string> = {
+  cosmetologia: "Cosmetología",
+  dermatologia: "Dermatología",
+  spa: "Spa & Bienestar",
+  tendencias: "Tendencias",
+};
 
 export const BeautyTipsCarousel = () => {
+  const { data: posts = [] } = useBlogPosts(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || posts.length <= 1) return;
     const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % BEAUTY_TIPS.length);
+      setActiveIndex((prev) => (prev + 1) % posts.length);
     }, 5500);
     return () => clearInterval(timer);
-  }, [paused]);
+  }, [paused, posts.length]);
 
-  const prev = () =>
-    setActiveIndex((i) => (i - 1 + BEAUTY_TIPS.length) % BEAUTY_TIPS.length);
-  const next = () => setActiveIndex((i) => (i + 1) % BEAUTY_TIPS.length);
+  useEffect(() => {
+    if (activeIndex >= posts.length) {
+      setActiveIndex(0);
+    }
+  }, [posts.length, activeIndex]);
 
-  const current = BEAUTY_TIPS[activeIndex];
-  const Icon = current.icon;
+  if (posts.length === 0) return null;
+
+  const current = posts[activeIndex] ?? posts[0];
+  const prev = () => setActiveIndex((i) => (i - 1 + posts.length) % posts.length);
+  const next = () => setActiveIndex((i) => (i + 1) % posts.length);
 
   return (
     <div
@@ -75,22 +47,34 @@ export const BeautyTipsCarousel = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-4 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-              <Icon className="w-3.5 h-3.5" />
-              {current.tag}
+              <Sparkles className="w-3.5 h-3.5" />
+              {CATEGORY_LABELS[current.categoria] ?? current.categoria}
             </div>
 
             <h3 className="text-2xl sm:text-3xl font-serif font-bold text-foreground">
-              {current.title}
+              {current.titulo}
             </h3>
 
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              {current.summary}
+              {current.resumen}
             </p>
 
-            <div className="pt-2 border-t border-border/60">
-              <p className="text-xs sm:text-sm font-medium text-primary">
-                💡 Dato Pro: <span className="text-foreground/80 font-normal">{current.fact}</span>
-              </p>
+            {current.dato_pro && (
+              <div className="pt-2 border-t border-border/60">
+                <p className="text-xs sm:text-sm font-medium text-primary">
+                  💡 Dato Pro:{" "}
+                  <span className="text-foreground/80 font-normal">{current.dato_pro}</span>
+                </p>
+              </div>
+            )}
+
+            <div className="pt-1">
+              <Link
+                to="/blog"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-primary hover:underline"
+              >
+                Explorar artículos en el Blog <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </div>
 
@@ -102,7 +86,7 @@ export const BeautyTipsCarousel = () => {
                 size="icon"
                 className="rounded-full h-10 w-10"
                 onClick={prev}
-                aria-label="Tip anterior"
+                aria-label="Artículo anterior"
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -112,19 +96,19 @@ export const BeautyTipsCarousel = () => {
                 size="icon"
                 className="rounded-full h-10 w-10"
                 onClick={next}
-                aria-label="Siguiente tip"
+                aria-label="Siguiente artículo"
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
 
             <div className="flex items-center gap-1.5">
-              {BEAUTY_TIPS.map((tip, idx) => (
+              {posts.map((post, idx) => (
                 <button
-                  key={tip.title}
+                  key={post.id}
                   type="button"
                   onClick={() => setActiveIndex(idx)}
-                  aria-label={`Ver tip ${idx + 1}`}
+                  aria-label={`Ver artículo ${idx + 1}`}
                   className={`h-2 rounded-full transition-all ${
                     idx === activeIndex ? "w-6 bg-primary" : "w-2 bg-primary/25"
                   }`}

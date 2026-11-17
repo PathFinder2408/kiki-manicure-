@@ -227,6 +227,7 @@ const Home = () => {
           <div className="flex justify-center gap-6 text-sm text-muted-foreground">
             <Link to="/portfolio" className="hover:text-primary transition-colors">Portafolio</Link>
             <Link to="/servicios" className="hover:text-primary transition-colors">Servicios</Link>
+            <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
             <Link to="/agendar" className="hover:text-primary transition-colors">Agendar</Link>
           </div>
           <p className="mt-8 text-sm text-muted-foreground">
