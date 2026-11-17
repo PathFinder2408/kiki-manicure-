@@ -9,6 +9,7 @@ export interface BookingNotification {
   fecha: string;
   hora: string;
   telefono: string;
+  email?: string;
 }
 
 export async function sendWhatsAppNotification(data: BookingNotification): Promise<boolean> {

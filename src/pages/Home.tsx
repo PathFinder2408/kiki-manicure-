@@ -4,6 +4,7 @@ import { Calendar, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import TiltCard from "@/components/TiltCard";
 import ReviewCarousel from "@/components/ReviewCarousel";
+import { BeautyTipsCarousel } from "@/components/BeautyTipsCarousel";
 import { useScrollAnimation, useStaggerAnimation } from "@/hooks/useScrollAnimation";
 import { useParallax } from "@/hooks/useMotionEffects";
 import heroImage from "@/assets/hero-nails.jpg";
@@ -153,6 +154,24 @@ const Home = () => {
               </Button>
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Beauty & Cosmetology Tips Carousel */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-5xl">
+          <div className="text-center mb-10">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/15 text-primary text-xs font-medium mb-3">
+              <Sparkles className="w-3.5 h-3.5" /> Actualidad & Cosmetología
+            </span>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-3">
+              Tips & Tendencias de Cuidado
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
+              Consejos profesionales para mantener tus uñas fuertes, sanas y siempre impecables
+            </p>
+          </div>
+          <BeautyTipsCarousel />
         </div>
       </section>
 

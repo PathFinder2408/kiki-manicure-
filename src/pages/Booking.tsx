@@ -187,6 +187,7 @@ const Booking = () => {
         fecha: formatDisplayDate(selectedDateStr),
         hora: selectedTime,
         telefono: values.phone,
+        email: values.email,
       });
 
       setStep(4);
