@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
   Check,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   DollarSign,
   Search,
@@ -10,12 +11,15 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getMonthBounds, shiftMonthKey } from "@/lib/dateUtils";
 import { formatCurrency, formatDisplayDate } from "@/lib/formatters";
 import type { Cita, CitaEstado } from "@/types/salon";
 
 interface AdminAgendaTabProps {
   citas: Cita[];
   moneda: string;
+  selectedMonth: string;
+  onMonthChange: (monthKey: string) => void;
   onUpdateEstado: (citaId: number, estado: CitaEstado) => Promise<void>;
   onCobrarCita: (cita: Cita) => void;
 }
@@ -31,6 +35,8 @@ const STATUS_BADGE: Record<CitaEstado, string> = {
 export const AdminAgendaTab = ({
   citas,
   moneda,
+  selectedMonth,
+  onMonthChange,
   onUpdateEstado,
   onCobrarCita,
 }: AdminAgendaTabProps) => {
@@ -41,16 +47,21 @@ export const AdminAgendaTab = ({
     canceladas: false,
   });
 
+  const monthInfo = getMonthBounds(selectedMonth);
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return citas;
+    const inMonth = citas.filter(
+      (c) => c.fecha >= monthInfo.start && c.fecha <= monthInfo.end
+    );
+    if (!search.trim()) return inMonth;
     const q = search.toLowerCase();
-    return citas.filter(
+    return inMonth.filter(
       (c) =>
         c.cliente_nombre.toLowerCase().includes(q) ||
         c.cliente_telefono.toLowerCase().includes(q) ||
         c.servicio.toLowerCase().includes(q)
     );
-  }, [citas, search]);
+  }, [citas, search, monthInfo.start, monthInfo.end]);
 
   const groups = useMemo(() => {
     const activas = filtered
@@ -186,22 +197,55 @@ export const AdminAgendaTab = ({
 
   return (
     <Card className="p-5 sm:p-6 rounded-2xl border-border/60 space-y-5">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-serif font-semibold">Gestión de Agenda</h2>
+          <h2 className="text-xl font-serif font-semibold">
+            Gestión de Agenda · {monthInfo.label}
+          </h2>
           <p className="text-xs text-muted-foreground">
-            Vista compacta agrupada por estado. Haz clic en cada sección para expandir o comprimir.
+            Vista compacta por mes agrupada por estado. Haz clic para expandir o comprimir.
           </p>
         </div>
 
-        <div className="relative">
-          <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-          <Input
-            placeholder="Buscar clienta, teléfono o servicio..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 rounded-xl w-full sm:w-72"
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 bg-muted/50 border rounded-xl p-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-lg"
+              onClick={() => onMonthChange(shiftMonthKey(selectedMonth, -1))}
+              title="Mes anterior"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => e.target.value && onMonthChange(e.target.value)}
+              className="bg-transparent text-xs font-medium px-1.5 outline-none"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-lg"
+              onClick={() => onMonthChange(shiftMonthKey(selectedMonth, 1))}
+              title="Mes siguiente"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+
+          <div className="relative">
+            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
+              placeholder="Buscar clienta, teléfono o servicio..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 rounded-xl w-full sm:w-64"
+            />
+          </div>
         </div>
       </div>
 

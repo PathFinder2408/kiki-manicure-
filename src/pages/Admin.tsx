@@ -306,6 +306,8 @@ const Admin = () => {
             <AdminAgendaTab
               citas={citas}
               moneda={moneda}
+              selectedMonth={selectedMonth}
+              onMonthChange={setSelectedMonth}
               onUpdateEstado={handleUpdateEstado}
               onCobrarCita={setCitaToCharge}
             />
