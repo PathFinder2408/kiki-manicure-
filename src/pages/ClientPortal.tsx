@@ -103,18 +103,7 @@ const ClientPortal = () => {
       applySession(data.session);
     }, hasAuthParams ? 2200 : 400);
 
-    const isAdmin = isAdminEmail(userEmail);
-
-  useEffect(() => {
-    const manifestLink = document.querySelector('link[rel="manifest"]');
-    if (isAdmin) {
-      manifestLink?.setAttribute("href", "/admin-manifest.webmanifest");
-    } else {
-      manifestLink?.setAttribute("href", "/manifest.webmanifest");
-    }
-  }, [isAdmin]);
-
-  return () => {
+    return () => {
       mounted = false;
       clearTimeout(fallbackTimer);
       subscription.unsubscribe();
