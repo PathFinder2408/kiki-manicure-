@@ -22,7 +22,7 @@ import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab";
 import { AdminSettingsTab } from "@/components/admin/AdminSettingsTab";
 import { CobrarCitaModal } from "@/components/admin/CobrarCitaModal";
 import { useBusinessConfig, useServices } from "@/hooks/useSalonData";
-import { getFirstDayOfMonth, getLocalDateString } from "@/lib/dateUtils";
+import { getCurrentMonthKey, getLocalDateString, getMonthBounds } from "@/lib/dateUtils";
 import { supabase } from "@/supabase";
 import type {
   Cita,
@@ -50,6 +50,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonthKey());
   const [citas, setCitas] = useState<Cita[]>([]);
   const [clientas, setClientas] = useState<Clienta[]>([]);
   const [finanzasMes, setFinanzasMes] = useState<Finanza[]>([]);
@@ -71,13 +72,15 @@ const Admin = () => {
   }, []);
 
   const fetchFinanzas = useCallback(async () => {
+    const { start, end } = getMonthBounds(selectedMonth);
     const { data, error } = await supabase
       .from("finanzas")
       .select("*")
-      .gte("fecha", getFirstDayOfMonth())
+      .gte("fecha", start)
+      .lte("fecha", end)
       .order("fecha", { ascending: false });
     if (!error && data) setFinanzasMes(data as Finanza[]);
-  }, []);
+  }, [selectedMonth]);
 
   const fetchPortafolio = useCallback(async () => {
     const { data, error } = await supabase
@@ -312,6 +315,8 @@ const Admin = () => {
             <AdminFinanceTab
               finanzas={finanzasMes}
               moneda={moneda}
+              selectedMonth={selectedMonth}
+              onMonthChange={setSelectedMonth}
               onAddMovimiento={handleAddMovimiento}
               onDeleteMovimiento={handleDeleteMovimiento}
             />

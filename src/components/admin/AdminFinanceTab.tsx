@@ -1,17 +1,19 @@
 import { useMemo, useState } from "react";
-import { Download, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Plus, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getLocalDateString } from "@/lib/dateUtils";
+import { getLocalDateString, getMonthBounds, shiftMonthKey } from "@/lib/dateUtils";
 import { formatCurrency, formatDisplayDate } from "@/lib/formatters";
-import { exportFinanzasToCSV } from "@/lib/financeAnalytics";
+import { calculateFinanceSummary, exportFinanzasToCSV } from "@/lib/financeAnalytics";
 import type { Finanza, MetodoPago, TipoMovimiento } from "@/types/salon";
 
 interface AdminFinanceTabProps {
   finanzas: Finanza[];
   moneda: string;
+  selectedMonth: string;
+  onMonthChange: (monthKey: string) => void;
   onAddMovimiento: (payload: {
     tipo: TipoMovimiento;
     descripcion: string;
@@ -26,9 +28,13 @@ interface AdminFinanceTabProps {
 export const AdminFinanceTab = ({
   finanzas,
   moneda,
+  selectedMonth,
+  onMonthChange,
   onAddMovimiento,
   onDeleteMovimiento,
 }: AdminFinanceTabProps) => {
+  const monthInfo = getMonthBounds(selectedMonth);
+  const summary = useMemo(() => calculateFinanceSummary(finanzas), [finanzas]);
   const [filterType, setFilterType] = useState<"all" | TipoMovimiento>("all");
   const [showForm, setShowForm] = useState(false);
   const [tipo, setTipo] = useState<TipoMovimiento>("ingreso");
@@ -67,20 +73,53 @@ export const AdminFinanceTab = ({
   return (
     <div className="space-y-6">
       <Card className="p-5 sm:p-6 rounded-2xl border-border/60">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-xl font-serif font-semibold">Control de Caja y Finanzas</h2>
+            <h2 className="text-xl font-serif font-semibold">
+              Control de Caja · {monthInfo.label}
+            </h2>
             <p className="text-xs text-muted-foreground">
-              Registra ingresos, insumos y gastos operativos. Exporta tus reportes en 1 clic.
+              Registra ingresos, insumos y gastos operativos por mes.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 bg-muted/50 border rounded-xl p-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-lg"
+                onClick={() => onMonthChange(shiftMonthKey(selectedMonth, -1))}
+                title="Mes anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => e.target.value && onMonthChange(e.target.value)}
+                className="bg-transparent text-xs font-medium px-1.5 outline-none"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-lg"
+                onClick={() => onMonthChange(shiftMonthKey(selectedMonth, 1))}
+                title="Mes siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+
             <Button
               variant="outline"
               size="sm"
               className="rounded-xl gap-1.5"
-              onClick={() => exportFinanzasToCSV(filtered)}
+              onClick={() =>
+                exportFinanzasToCSV(filtered, `finanzas-${selectedMonth}.csv`)
+              }
             >
               <Download className="w-4 h-4" /> Exportar CSV
             </Button>
@@ -91,6 +130,28 @@ export const AdminFinanceTab = ({
             >
               <Plus className="w-4 h-4" /> Registrar Movimiento
             </Button>
+          </div>
+        </div>
+
+        {/* Resumen rápido del mes seleccionado */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+          <div className="p-3.5 rounded-xl border bg-muted/20">
+            <span className="text-xs text-muted-foreground">Ingresos {monthInfo.label}</span>
+            <p className="text-lg font-bold tabular-nums text-green-700">
+              +{formatCurrency(summary.ingresos, moneda)}
+            </p>
+          </div>
+          <div className="p-3.5 rounded-xl border bg-muted/20">
+            <span className="text-xs text-muted-foreground">Egresos {monthInfo.label}</span>
+            <p className="text-lg font-bold tabular-nums text-red-700">
+              -{formatCurrency(summary.egresos, moneda)}
+            </p>
+          </div>
+          <div className="p-3.5 rounded-xl border bg-primary/5 border-primary/20">
+            <span className="text-xs text-primary font-medium">Balance del Mes</span>
+            <p className="text-lg font-bold tabular-nums text-primary">
+              {formatCurrency(summary.balance, moneda)}
+            </p>
           </div>
         </div>
 
