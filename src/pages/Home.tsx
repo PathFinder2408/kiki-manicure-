@@ -6,12 +6,14 @@ import TiltCard from "@/components/TiltCard";
 import ReviewCarousel from "@/components/ReviewCarousel";
 import { BeautyTipsCarousel } from "@/components/BeautyTipsCarousel";
 import { useScrollAnimation, useStaggerAnimation } from "@/hooks/useScrollAnimation";
+import { useParallax } from "@/hooks/useMotionEffects";
 import heroImage from "@/assets/hero-nails.jpg";
 import gelNails from "@/assets/gel-nails.jpg";
 import acrylicNails from "@/assets/acrylic-nails.jpg";
 import handSpa from "@/assets/hand-spa.jpg";
 
 const Home = () => {
+  const parallaxRef = useParallax(0.35);
   const servicesHeaderRef = useScrollAnimation('animate-fade-in-up');
   const servicesGridRef = useStaggerAnimation('animate-fade-in-up', 200);
   const reviewsRef = useScrollAnimation('animate-fade-in-up');
@@ -45,55 +47,109 @@ const Home = () => {
     <div className="min-h-screen">
       <Navbar />
       
-      {/* Hero Section — Editorial Split Layout (limpio en móvil y desktop) */}
-      <section className="relative pt-24 pb-14 md:pt-28 md:pb-20 px-4 overflow-hidden bg-gradient-hero">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            {/* Imagen nítida de las manos primero en móvil o junto al texto */}
-            <div className="order-1 lg:order-2">
-              <div className="relative rounded-3xl overflow-hidden border-2 border-accent/30 shadow-hover aspect-[4/3] max-w-lg mx-auto">
-                <img
-                  src={heroImage}
-                  alt="Manos cuidadas en Kiki Spa"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/15 via-transparent to-transparent pointer-events-none" />
-              </div>
+      {/* Hero Desktop: Parallax pantalla completa */}
+      <section className="hidden md:flex relative min-h-[100dvh] items-center justify-center overflow-hidden">
+        <div
+          ref={parallaxRef}
+          className="absolute inset-0 bg-cover bg-center will-change-transform"
+          style={{
+            backgroundImage: `url(${heroImage})`,
+            top: "-10%",
+            bottom: "-10%",
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background" />
+        </div>
+
+        <div className="blob blob-1" />
+        <div className="blob blob-2" />
+        <div className="blob blob-3" />
+
+        <div className="relative z-10 container mx-auto px-4 text-center">
+          <div className="max-w-3xl mx-auto space-y-6 animate-hero-entry">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-card/85 backdrop-blur-sm rounded-full border border-accent/30">
+              <Sparkles className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium">Spa & Manicura Profesional</span>
             </div>
 
-            {/* Texto y botones ordenados y centrados */}
-            <div className="order-2 lg:order-1 text-center lg:text-left space-y-5 animate-hero-entry">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-card/90 backdrop-blur-sm rounded-full border border-accent/30 shadow-sm">
-                <Sparkles className="h-4 w-4 text-accent" />
-                <span className="text-xs sm:text-sm font-medium">Spa & Manicura Profesional</span>
-              </div>
+            <h1 className="text-5xl lg:text-7xl font-serif font-bold leading-tight">
+              Belleza en Cada
+              <span className="block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient-text pb-2">
+                Detalle
+              </span>
+            </h1>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold leading-tight">
-                Belleza en Cada
-                <span className="block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient-text pb-1">
-                  Detalle
-                </span>
-              </h1>
+            <p className="text-xl text-foreground/80 max-w-2xl mx-auto">
+              Experimenta el arte del spa de manos y manicura con diseños únicos y cuidado personalizado
+            </p>
 
-              <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
-                Experimenta el arte del spa de manos y manicura con diseños únicos y cuidado personalizado.
-              </p>
+            <div className="flex flex-wrap gap-3 justify-center items-center pt-4">
+              <Link to="/agendar">
+                <Button size="lg" variant="hero" className="min-w-[200px] rounded-xl">
+                  <Calendar className="mr-2 h-5 w-5" />
+                  Reservar Cita
+                </Button>
+              </Link>
+              <Link to="/mi-agenda">
+                <Button size="lg" variant="outline" className="min-w-[160px] rounded-xl bg-card/80">
+                  Mi Agenda
+                </Button>
+              </Link>
+              <Link to="/portfolio">
+                <Button size="lg" variant="outline" className="min-w-[160px] rounded-xl bg-card/80">
+                  Ver Portafolio
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
 
-              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start items-center pt-2">
-                <Link to="/agendar" className="w-full sm:w-auto">
-                  <Button size="lg" variant="hero" className="w-full sm:min-w-[180px] rounded-xl">
-                    <Calendar className="mr-2 h-5 w-5" />
-                    Reservar Cita
-                  </Button>
-                </Link>
-                <Link to="/mi-agenda" className="w-full sm:w-auto">
-                  <Button size="lg" variant="outline" className="w-full sm:min-w-[150px] rounded-xl bg-card/80">
+      {/* Hero Móvil: Editorial limpio para lucir la imagen de manos */}
+      <section className="md:hidden relative pt-24 pb-12 px-4 overflow-hidden bg-gradient-hero">
+        <div className="container mx-auto max-w-md space-y-6">
+          <div className="relative rounded-3xl overflow-hidden border-2 border-accent/30 shadow-hover aspect-[4/3]">
+            <img
+              src={heroImage}
+              alt="Manos cuidadas en Kiki Spa"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/15 via-transparent to-transparent pointer-events-none" />
+          </div>
+
+          <div className="text-center space-y-4 animate-hero-entry">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-card/90 backdrop-blur-sm rounded-full border border-accent/30 shadow-sm">
+              <Sparkles className="h-3.5 w-3.5 text-accent" />
+              <span className="text-xs font-medium">Spa & Manicura Profesional</span>
+            </div>
+
+            <h1 className="text-4xl font-serif font-bold leading-tight">
+              Belleza en Cada
+              <span className="block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient-text pb-1">
+                Detalle
+              </span>
+            </h1>
+
+            <p className="text-sm text-muted-foreground">
+              Experimenta el arte del spa de manos y manicura con diseños únicos y cuidado personalizado.
+            </p>
+
+            <div className="flex flex-col gap-2.5 pt-2">
+              <Link to="/agendar" className="w-full">
+                <Button size="lg" variant="hero" className="w-full rounded-xl">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Reservar Cita
+                </Button>
+              </Link>
+              <div className="grid grid-cols-2 gap-2.5">
+                <Link to="/mi-agenda">
+                  <Button size="default" variant="outline" className="w-full rounded-xl bg-card/85">
                     Mi Agenda
                   </Button>
                 </Link>
-                <Link to="/portfolio" className="w-full sm:w-auto">
-                  <Button size="lg" variant="ghost" className="w-full sm:min-w-[140px] rounded-xl">
-                    Ver Portafolio
+                <Link to="/portfolio">
+                  <Button size="default" variant="outline" className="w-full rounded-xl bg-card/85">
+                    Portafolio
                   </Button>
                 </Link>
               </div>
