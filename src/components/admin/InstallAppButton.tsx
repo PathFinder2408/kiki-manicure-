@@ -16,9 +16,10 @@ interface BeforeInstallPromptEvent extends Event {
 
 interface InstallAppButtonProps {
   compact?: boolean;
+  label?: string;
 }
 
-export const InstallAppButton = ({ compact = false }: InstallAppButtonProps) => {
+export const InstallAppButton = ({ compact = false, label }: InstallAppButtonProps) => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
@@ -83,7 +84,7 @@ export const InstallAppButton = ({ compact = false }: InstallAppButtonProps) => 
         }
       >
         <Smartphone className="w-4 h-4 shrink-0" />
-        <span>{compact ? "Instalar App" : "Instalar App en Celular"}</span>
+        <span>{label ?? (compact ? "Instalar App" : "Instalar App en Celular")}</span>
       </Button>
 
       <Dialog open={showIOSGuide} onOpenChange={setShowIOSGuide}>

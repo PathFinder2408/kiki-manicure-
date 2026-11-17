@@ -66,6 +66,25 @@ export interface Clienta {
   created_at?: string;
 }
 
+export interface ClientaAtencion {
+  id: string;
+  clienta_id: string;
+  fecha: string;
+  servicio: string;
+  productos_tonos: string;
+  observaciones: string;
+  created_at?: string;
+}
+
+export interface Resena {
+  id: string;
+  cliente_nombre: string;
+  servicio: string;
+  calificacion: number;
+  comentario: string;
+  created_at?: string;
+}
+
 export interface BlogPost {
   id: string;
   slug: string;
@@ -95,6 +114,8 @@ export interface NegocioConfig {
   subtitulo: string;
   telefono_contacto: string;
   instagram: string;
+  facebook?: string;
+  tiktok?: string;
   direccion: string;
   horario_apertura: string;
   horario_cierre: string;

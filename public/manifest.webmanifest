@@ -1,8 +1,8 @@
 {
-  "name": "Kiki Spa · Gestión de Salón",
+  "name": "Kiki Spa · Tu Espacio de Belleza",
   "short_name": "Kiki Spa",
-  "description": "Panel móvil de agenda, finanzas y clientas para el salón.",
-  "start_url": "/admin",
+  "description": "Agenda tus citas, revisa tu historial y evalúa tus servicios en Kiki Spa.",
+  "start_url": "/mi-agenda",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

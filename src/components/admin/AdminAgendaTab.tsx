@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import {
   Check,
   ChevronDown,
-  ChevronLeft,
   ChevronRight,
   DollarSign,
   Search,
@@ -11,7 +10,8 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getMonthBounds, shiftMonthKey } from "@/lib/dateUtils";
+import { MonthSelector } from "@/components/admin/MonthSelector";
+import { getMonthBounds } from "@/lib/dateUtils";
 import { formatCurrency, formatDisplayDate } from "@/lib/formatters";
 import type { Cita, CitaEstado } from "@/types/salon";
 
@@ -207,35 +207,8 @@ export const AdminAgendaTab = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 bg-muted/50 border rounded-xl p-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-lg"
-              onClick={() => onMonthChange(shiftMonthKey(selectedMonth, -1))}
-              title="Mes anterior"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <input
-              type="month"
-              value={selectedMonth}
-              onChange={(e) => e.target.value && onMonthChange(e.target.value)}
-              className="bg-transparent text-xs font-medium px-1.5 outline-none"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-lg"
-              onClick={() => onMonthChange(shiftMonthKey(selectedMonth, 1))}
-              title="Mes siguiente"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <MonthSelector selectedMonth={selectedMonth} onMonthChange={onMonthChange} />
 
           <div className="relative">
             <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />

@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getLocalDateString, getMonthBounds, shiftMonthKey } from "@/lib/dateUtils";
+import { MonthSelector } from "@/components/admin/MonthSelector";
+import { getLocalDateString, getMonthBounds } from "@/lib/dateUtils";
 import { formatCurrency, formatDisplayDate } from "@/lib/formatters";
 import { calculateFinanceSummary, exportFinanzasToCSV } from "@/lib/financeAnalytics";
 import type { Finanza, MetodoPago, TipoMovimiento } from "@/types/salon";
@@ -84,34 +85,7 @@ export const AdminFinanceTab = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 bg-muted/50 border rounded-xl p-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-lg"
-                onClick={() => onMonthChange(shiftMonthKey(selectedMonth, -1))}
-                title="Mes anterior"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <input
-                type="month"
-                value={selectedMonth}
-                onChange={(e) => e.target.value && onMonthChange(e.target.value)}
-                className="bg-transparent text-xs font-medium px-1.5 outline-none"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-lg"
-                onClick={() => onMonthChange(shiftMonthKey(selectedMonth, 1))}
-                title="Mes siguiente"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
+            <MonthSelector selectedMonth={selectedMonth} onMonthChange={onMonthChange} />
 
             <Button
               variant="outline"

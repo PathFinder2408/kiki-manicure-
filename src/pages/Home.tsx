@@ -85,15 +85,20 @@ const Home = () => {
               Experimenta el arte de la manicura con diseños únicos y cuidado personalizado
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Link to="/agendar">
-                <Button size="lg" variant="hero" className="min-w-[200px]">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-4">
+              <Link to="/agendar" className="w-full sm:w-auto">
+                <Button size="lg" variant="hero" className="w-full sm:min-w-[200px]">
                   <Calendar className="mr-2 h-5 w-5" />
                   Reservar Cita
                 </Button>
               </Link>
-              <Link to="/portfolio">
-                <Button size="lg" variant="outline" className="min-w-[200px]">
+              <Link to="/mi-agenda" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full sm:min-w-[180px]">
+                  Mi Agenda
+                </Button>
+              </Link>
+              <Link to="/portfolio" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full sm:min-w-[180px]">
                   Ver Portafolio
                 </Button>
               </Link>
@@ -224,11 +229,43 @@ const Home = () => {
           <p className="text-muted-foreground mb-6">
             Belleza y elegancia en cada detalle
           </p>
-          <div className="flex justify-center gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
             <Link to="/portfolio" className="hover:text-primary transition-colors">Portafolio</Link>
             <Link to="/servicios" className="hover:text-primary transition-colors">Servicios</Link>
             <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
             <Link to="/agendar" className="hover:text-primary transition-colors">Agendar</Link>
+            <Link to="/mi-agenda" className="hover:text-primary transition-colors">Mi Agenda</Link>
+          </div>
+
+          {/* Redes Sociales */}
+          <div className="flex justify-center items-center gap-4 mt-6">
+            <a
+              href="https://www.instagram.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram Kiki Spa"
+              className="px-4 py-2 rounded-full border border-border bg-background hover:border-primary hover:text-primary transition-colors text-xs font-medium inline-flex items-center gap-1.5"
+            >
+              Instagram
+            </a>
+            <a
+              href="https://www.facebook.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook Kiki Spa"
+              className="px-4 py-2 rounded-full border border-border bg-background hover:border-primary hover:text-primary transition-colors text-xs font-medium inline-flex items-center gap-1.5"
+            >
+              Facebook
+            </a>
+            <a
+              href="https://www.tiktok.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="TikTok Kiki Spa"
+              className="px-4 py-2 rounded-full border border-border bg-background hover:border-primary hover:text-primary transition-colors text-xs font-medium inline-flex items-center gap-1.5"
+            >
+              TikTok
+            </a>
           </div>
           <p className="mt-8 text-sm text-muted-foreground">
             © 2025 Kiki Manicure. Todos los derechos reservados.

@@ -14,6 +14,7 @@ const Portfolio = lazy(() => import("./pages/Portfolio"));
 const Services = lazy(() => import("./pages/Services"));
 const Blog = lazy(() => import("./pages/Blog"));
 const Booking = lazy(() => import("./pages/Booking"));
+const ClientPortal = lazy(() => import("./pages/ClientPortal"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Login = lazy(() => import("./pages/Login"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/servicios" element={<Services />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/agendar" element={<Booking />} />
+            <Route path="/mi-agenda" element={<ClientPortal />} />
             <Route path="/login" element={<Login />} />
             <Route
               path="/admin"
