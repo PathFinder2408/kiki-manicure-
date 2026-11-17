@@ -52,9 +52,10 @@ ALTER TABLE public.negocio_config
   ADD COLUMN IF NOT EXISTS tiktok text DEFAULT '';
 
 -- 4. RPC segura para que la clienta autenticada vea SOLO sus propias citas en /mi-agenda
+DROP FUNCTION IF EXISTS public.get_my_appointments();
 CREATE OR REPLACE FUNCTION public.get_my_appointments()
 RETURNS TABLE (
-  id bigint,
+  id text,
   servicio text,
   fecha text,
   hora text,
@@ -66,7 +67,7 @@ LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT c.id, c.servicio, c.fecha::text, c.hora::text, c.estado, c.precio_acordado, c.duracion_min
+  SELECT c.id::text, c.servicio, c.fecha::text, c.hora::text, c.estado, c.precio_acordado, c.duracion_min
   FROM public.citas c
   WHERE lower(trim(c.cliente_email)) = lower(trim(COALESCE(auth.jwt() ->> 'email', '')))
   ORDER BY c.fecha DESC, c.hora DESC

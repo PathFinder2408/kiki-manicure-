@@ -1,18 +1,18 @@
 {
-  "name": "Kiki Spa · Tu Espacio de Belleza",
+  "name": "Kiki Spa · Belleza & Bienestar",
   "short_name": "Kiki Spa",
-  "description": "Agenda tus citas, revisa tu historial y evalúa tus servicios en Kiki Spa.",
-  "start_url": "/mi-agenda",
+  "description": "Agenda tus citas, explora nuestro portafolio y evalúa tus servicios en Kiki Spa.",
+  "start_url": "/agendar",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FAF8F5",
-  "theme_color": "#6E2C3B",
+  "background_color": "#FAF5F2",
+  "theme_color": "#8C354A",
   "icons": [
     {
-      "src": "/app-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/client-icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     }
   ]

@@ -1,0 +1,19 @@
+{
+  "name": "Kiki Admin · Gestión de Salón",
+  "short_name": "Kiki Admin",
+  "description": "Panel privado de gestión, agenda, finanzas y ficha clínica para Kiki Spa.",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF5F2",
+  "theme_color": "#6E2C3B",
+  "icons": [
+    {
+      "src": "/admin-icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

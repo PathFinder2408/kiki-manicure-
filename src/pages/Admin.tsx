@@ -104,10 +104,21 @@ const Admin = () => {
   }, []);
 
   useEffect(() => {
+    // Cambia el manifest PWA al de Dueña mientras esté en /admin
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    const previousHref = manifestLink?.getAttribute("href");
+    manifestLink?.setAttribute("href", "/admin-manifest.webmanifest");
+
     fetchCitas();
     fetchFinanzas();
     fetchPortafolio();
     fetchClientas();
+
+    return () => {
+      if (manifestLink && previousHref) {
+        manifestLink.setAttribute("href", previousHref);
+      }
+    };
   }, [fetchCitas, fetchFinanzas, fetchPortafolio, fetchClientas]);
 
   const citasHoy = useMemo(() => {

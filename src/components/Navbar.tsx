@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, Lock, Menu, Sparkles, User } from "lucide-react";
+import { Calendar, Menu, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { InstallAppButton } from "@/components/admin/InstallAppButton";
@@ -11,10 +11,10 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
 
   const navLinks = [
+    { to: "/agendar", label: "Agendar Cita" },
     { to: "/portfolio", label: "Portafolio" },
     { to: "/servicios", label: "Servicios" },
     { to: "/blog", label: "Blog" },
-    { to: "/agendar", label: "Agendar Cita" },
     { to: "/mi-agenda", label: "Mi Agenda" },
   ];
 
@@ -34,7 +34,7 @@ const Navbar = () => {
             </span>
           </Link>
 
-          {/* Desktop Nav */}
+          {/* Desktop Nav (100% orientado a clientas, sin acceso admin visible) */}
           <div className="hidden md:flex items-center gap-7">
             {navLinks.map((item) => (
               <Link
@@ -46,40 +46,46 @@ const Navbar = () => {
                 <span className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-primary rounded-full transition-all duration-300 group-hover:w-full group-hover:left-0" />
               </Link>
             ))}
-            <Link to="/admin" title="Acceso Administración">
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <User className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            </Link>
           </div>
 
           {/* Mobile Nav */}
           <div className="md:hidden flex items-center gap-2">
             <Link to="/agendar">
-              <Button size="sm" className="rounded-xl gap-1.5 text-xs">
+              <Button size="sm" className="rounded-full px-4 gap-1.5 text-xs shadow-sm">
                 <Calendar className="h-3.5 w-3.5" /> Agendar
               </Button>
             </Link>
 
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="rounded-xl h-9 w-9" aria-label="Abrir menú">
-                  <Menu className="h-4 w-4" />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full h-9 w-9 border-primary/20 bg-card"
+                  aria-label="Abrir menú"
+                >
+                  <Menu className="h-4 w-4 text-primary" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[280px] flex flex-col justify-between bg-background">
+              <SheetContent
+                side="right"
+                className="w-[290px] flex flex-col justify-between bg-gradient-to-b from-background to-secondary/30 border-l border-border/70"
+              >
                 <div>
-                  <SheetHeader className="text-left pb-4 border-b">
-                    <SheetTitle className="font-serif flex items-center gap-2 text-primary">
-                      <Sparkles className="w-4 h-4" /> Kiki Spa
+                  <SheetHeader className="text-left pb-4 border-b border-border/60">
+                    <SheetTitle className="font-serif flex items-center gap-2 text-primary text-xl">
+                      <Sparkles className="w-4 h-4 text-accent" /> Kiki Spa
                     </SheetTitle>
+                    <p className="text-xs text-muted-foreground">
+                      Belleza, cuidado y bienestar en cada detalle
+                    </p>
                   </SheetHeader>
 
                   <div className="flex flex-col gap-1.5 mt-5">
                     <Link
                       to="/"
                       onClick={() => setOpen(false)}
-                      className="px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
+                      className="px-3.5 py-2.5 rounded-2xl text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors"
                     >
                       Inicio
                     </Link>
@@ -88,27 +94,19 @@ const Navbar = () => {
                         key={item.to}
                         to={item.to}
                         onClick={() => setOpen(false)}
-                        className="px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
+                        className="px-3.5 py-2.5 rounded-2xl text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors"
                       >
                         {item.label}
                       </Link>
                     ))}
                   </div>
-
-                  <div className="mt-6 pt-4 border-t">
-                    <InstallAppButton label="Descargar App Clienta" />
-                  </div>
                 </div>
 
-                {/* Acceso sutil de dueña */}
-                <div className="pt-4 border-t">
-                  <Link
-                    to="/admin"
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-                  >
-                    <Lock className="w-3.5 h-3.5" /> Acceso Dueña (Admin)
-                  </Link>
+                <div className="pt-4 border-t border-border/60 space-y-2">
+                  <InstallAppButton label="Descargar App Kiki Spa" />
+                  <p className="text-[11px] text-center text-muted-foreground">
+                    Agenda y revisa tus citas desde tu celular
+                  </p>
                 </div>
               </SheetContent>
             </Sheet>

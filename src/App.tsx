@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SalonLoader } from "@/components/SalonLoader";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { supabase } from "@/supabase";
 import Home from "./pages/Home";
 
@@ -68,6 +69,7 @@ const App = () => (
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <MobileBottomNav />
         </Suspense>
       </BrowserRouter>
     </TooltipProvider>
