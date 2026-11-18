@@ -69,6 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     telegram?: boolean;
     email?: boolean;
     push?: number;
+    pushDebug?: string;
     whatsapp?: boolean;
   } = {};
 
@@ -185,6 +186,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 sentCount += 1;
               } catch (err: unknown) {
                 const statusCode = (err as { statusCode?: number })?.statusCode;
+                const msg = (err as { message?: string })?.message || "err";
+                results.pushDebug = `send_err:${statusCode ?? "unknown"}:${msg.slice(0, 60)}`;
                 if (statusCode === 404 || statusCode === 410) {
                   expiredIds.push(row.id);
                 }
@@ -205,14 +208,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             );
           }
           results.push = sentCount;
+          if (!results.pushDebug) results.pushDebug = `ok:${sentCount}/${subs.length}`;
         } else {
           results.push = 0;
+          results.pushDebug = "no_subscriptions_in_db";
         }
+      } else {
+        results.push = 0;
+        results.pushDebug = `db_status:${subsRes.status}`;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("[API notify] Error Web Push:", error);
       results.push = 0;
+      results.pushDebug = `catch:${(error as { message?: string })?.message?.slice(0, 60) ?? "err"}`;
     }
+  } else {
+    results.pushDebug = `missing_env:pub=${Boolean(vapidPublic)},priv=${Boolean(vapidPrivate)},url=${Boolean(supabaseUrl)},srv=${Boolean(supabaseServiceKey)}`;
   }
 
   // 4. Canal opcional: CallMeBot WhatsApp

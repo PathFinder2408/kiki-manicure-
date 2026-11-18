@@ -38,10 +38,20 @@ export const PushNotificationToggle = ({ compact = false }: PushNotificationTogg
 
     navigator.serviceWorker
       .getRegistration("/sw.js")
-      .then((reg) => reg?.pushManager.getSubscription())
-      .then((sub) => {
+      .then(async (reg) => {
+        const sub = await reg?.pushManager.getSubscription();
         if (sub && Notification.permission === "granted") {
           setEnabled(true);
+          // Sincroniza en segundo plano para asegurar que exista en Supabase
+          const { data: userData } = await supabase.auth.getUser();
+          await supabase.from("push_subscriptions").upsert(
+            {
+              user_email: userData.user?.email ?? "",
+              endpoint: sub.endpoint,
+              subscription: sub.toJSON(),
+            },
+            { onConflict: "endpoint" }
+          );
         }
       })
       .catch(() => {});
