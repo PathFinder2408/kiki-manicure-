@@ -1,4 +1,6 @@
 import { z } from "zod";
+import webpush from "web-push";
+import { createClient } from "@supabase/supabase-js";
 
 const notificationSchema = z.object({
   nombre: z.string().trim().min(2).max(120),
@@ -47,15 +49,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const adminEmail = process.env.ADMIN_EMAIL;
   const callmebotPhone = process.env.CALLMEBOT_PHONE || process.env.VITE_CALLMEBOT_PHONE;
   const callmebotKey = process.env.CALLMEBOT_API_KEY || process.env.VITE_CALLMEBOT_API_KEY;
+  const vapidPublic = process.env.VAPID_PUBLIC_KEY || process.env.VITE_VAPID_PUBLIC_KEY;
+  const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
+  const vapidSubject = process.env.VAPID_SUBJECT || "mailto:admin@kikispa.app";
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!telegramToken && !resendApiKey && !(callmebotPhone && callmebotKey)) {
+  if (
+    !telegramToken &&
+    !resendApiKey &&
+    !(vapidPublic && vapidPrivate && supabaseUrl && supabaseServiceKey) &&
+    !(callmebotPhone && callmebotKey)
+  ) {
     return res.status(500).json({
       ok: false,
       error: "No hay canal de notificación configurado en el servidor",
     });
   }
 
-  const results: { telegram?: boolean; email?: boolean; whatsapp?: boolean } = {};
+  const results: {
+    telegram?: boolean;
+    email?: boolean;
+    push?: number;
+    whatsapp?: boolean;
+  } = {};
 
   // 1. Canal principal: Telegram Bot API
   if (telegramToken && telegramChatId) {
@@ -127,7 +144,56 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // 3. Canal opcional: CallMeBot WhatsApp
+  // 3. Canal Web Push nativo a la App Admin instalada
+  if (vapidPublic && vapidPrivate && supabaseUrl && supabaseServiceKey) {
+    try {
+      webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+      const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: subs } = await adminSupabase
+        .from("push_subscriptions")
+        .select("id, subscription");
+
+      if (subs && subs.length > 0) {
+        const pushPayload = JSON.stringify({
+          title: `Nueva Cita: ${nombre} ✨`,
+          body: `${servicio} · ${fecha} a las ${hora} hrs`,
+          url: "/admin",
+        });
+
+        let sentCount = 0;
+        const expiredIds: string[] = [];
+
+        await Promise.all(
+          subs.map(async (row) => {
+            try {
+              await webpush.sendNotification(
+                row.subscription as webpush.PushSubscription,
+                pushPayload
+              );
+              sentCount += 1;
+            } catch (err: unknown) {
+              const statusCode = (err as { statusCode?: number })?.statusCode;
+              if (statusCode === 404 || statusCode === 410) {
+                expiredIds.push(row.id);
+              }
+            }
+          })
+        );
+
+        if (expiredIds.length > 0) {
+          await adminSupabase.from("push_subscriptions").delete().in("id", expiredIds);
+        }
+        results.push = sentCount;
+      } else {
+        results.push = 0;
+      }
+    } catch (error) {
+      console.error("[API notify] Error Web Push:", error);
+      results.push = 0;
+    }
+  }
+
+  // 4. Canal opcional: CallMeBot WhatsApp
   if (callmebotPhone && callmebotKey) {
     const waMessage = [
       "📅 *Nueva Cita Agendada!*",
@@ -151,7 +217,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const anyOk =
-    results.telegram === true || results.email === true || results.whatsapp === true;
+    results.telegram === true ||
+    results.email === true ||
+    (results.push ?? 0) > 0 ||
+    results.whatsapp === true;
   return res.status(anyOk ? 200 : 502).json({ ok: anyOk, channels: results });
 }
 

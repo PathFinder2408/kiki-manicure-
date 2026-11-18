@@ -24,6 +24,7 @@ import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab";
 import { AdminSettingsTab } from "@/components/admin/AdminSettingsTab";
 import { CobrarCitaModal } from "@/components/admin/CobrarCitaModal";
 import { InstallAppButton } from "@/components/admin/InstallAppButton";
+import { PushNotificationToggle } from "@/components/admin/PushNotificationToggle";
 import { useBlogPosts, useBusinessConfig, useServices } from "@/hooks/useSalonData";
 import { getCurrentMonthKey, getLocalDateString, getMonthBounds } from "@/lib/dateUtils";
 import { getFarewellMessage, getMindfulMessage, getTimeGreeting, resolveDisplayName } from "@/lib/greetings";
@@ -126,7 +127,25 @@ const Admin = () => {
     fetchPortafolio();
     fetchClientas();
 
+    // Escucha en tiempo real nuevas citas si la app está abierta
+    const channel = supabase
+      .channel("admin-citas-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "citas" },
+        (payload) => {
+          const nueva = payload.new as Partial<Cita>;
+          toast.success(`Nueva cita agendada: ${nueva.cliente_nombre ?? "Clienta"} ✨`, {
+            description: `${nueva.fecha ?? ""} · ${nueva.hora ?? ""}`,
+          });
+          fetchCitas();
+          fetchClientas();
+        }
+      )
+      .subscribe();
+
     return () => {
+      supabase.removeChannel(channel);
       if (manifestLink && previousHref) {
         manifestLink.setAttribute("href", previousHref);
       }
@@ -259,6 +278,7 @@ const Admin = () => {
         </div>
 
         <div className="space-y-2 pt-4 border-t">
+          <PushNotificationToggle />
           <InstallAppButton alwaysShow appTitle="Kiki Admin" label="Descargar App Admin" />
           <Button
             variant="outline"
@@ -295,6 +315,7 @@ const Admin = () => {
           </div>
 
           <div className="flex items-center gap-1.5 lg:hidden shrink-0">
+            <PushNotificationToggle compact />
             <InstallAppButton compact appTitle="Kiki Admin" label="App Admin" />
             <Button
               variant="outline"
