@@ -37,15 +37,12 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md p-6 sm:p-8 border-2 border-border bg-gradient-card">
-        <div className="text-center mb-8">
-          <div className="mb-2">
-            <span className="brand-elegant text-2xl sm:text-3xl bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-gradient-text flex flex-wrap justify-center items-center gap-1">
-              <span className="brand-kiki">Kiki</span>
-              <span className="brand-separator hidden sm:inline-block mx-1" />
-              <span className="brand-manicure hidden sm:inline-block">Manicure</span>
-              <span className="brand-manicure sm:hidden w-full text-sm">Manicure</span>
-            </span>
-          </div>
+        <div className="text-center mb-6">
+          <img
+            src="/kiki-logo.jpg"
+            alt="Kiki Spa y Belleza"
+            className="w-24 h-24 rounded-2xl object-cover mx-auto mb-4 border-2 border-accent/40 shadow-sm"
+          />
           <p className="text-muted-foreground text-sm sm:text-base">Acceso al panel de administración</p>
         </div>
 

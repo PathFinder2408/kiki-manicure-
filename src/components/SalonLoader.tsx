@@ -70,13 +70,14 @@ export const SalonLoader = () => {
       <div className="relative flex flex-col items-center">
         <div className="absolute -inset-8 rounded-full bg-accent/20 blur-2xl animate-pulse" />
 
-        <div className="relative w-20 h-20 flex items-center justify-center rounded-2xl bg-card border border-accent/40 shadow-sm mb-5">
-          <Sparkles className="w-4 h-4 text-accent absolute top-2 right-2 animate-pulse" />
-          <Sparkles className="w-3 h-3 text-primary/60 absolute bottom-2.5 left-2.5 animate-bounce" />
-          <Flower2
-            className="w-10 h-10 text-primary animate-pulse"
-            style={{ animationDuration: "1.8s" }}
+        <div className="relative w-24 h-24 flex items-center justify-center rounded-2xl bg-card border-2 border-accent/40 shadow-md mb-5 overflow-hidden">
+          <img
+            src="/kiki-logo.jpg"
+            alt="Kiki Spa y Belleza"
+            className="w-full h-full object-cover animate-pulse"
+            style={{ animationDuration: "2.2s" }}
           />
+          <Sparkles className="w-4 h-4 text-accent absolute top-1.5 right-1.5 animate-pulse" />
         </div>
 
         <p className="font-serif font-semibold text-lg text-foreground tracking-wide">

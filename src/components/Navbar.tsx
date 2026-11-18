@@ -50,7 +50,12 @@ const Navbar = () => {
     >
       <div className="container mx-auto px-4 py-3.5">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group truncate">
+          <Link to="/" className="flex items-center gap-2.5 group truncate">
+            <img
+              src="/kiki-logo.jpg"
+              alt="Kiki Spa"
+              className="w-8 h-8 rounded-full object-cover border border-accent/50 shadow-sm shrink-0"
+            />
             <span className="brand-elegant text-xl sm:text-2xl bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient-text truncate">
               <span className="brand-kiki">Kiki</span>
               <span className="brand-separator mx-1" />
