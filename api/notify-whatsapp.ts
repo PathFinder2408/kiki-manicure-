@@ -1,6 +1,4 @@
 import { z } from "zod";
-import webpush from "web-push";
-import { createClient } from "@supabase/supabase-js";
 
 const notificationSchema = z.object({
   nombre: z.string().trim().min(2).max(120),
@@ -23,7 +21,7 @@ interface VercelResponse {
 
 /**
  * Serverless Function en Vercel para enviar alertas instantáneas de nuevas citas.
- * Soporta Telegram Bot API (recomendado, gratis e ilimitado) y CallMeBot WhatsApp.
+ * Soporta Telegram Bot API, Resend Email, Web Push nativo (App Admin) y CallMeBot.
  * Mantiene todas las credenciales privadas en el servidor.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -45,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
   const telegramChatId = process.env.TELEGRAM_CHAT_ID;
   const resendApiKey = process.env.RESEND_API_KEY;
-  const resendFrom = process.env.RESEND_FROM_EMAIL || "Kiki Manicure <onboarding@resend.dev>";
+  const resendFrom = process.env.RESEND_FROM_EMAIL || "Kiki Spa <onboarding@resend.dev>";
   const adminEmail = process.env.ADMIN_EMAIL;
   const callmebotPhone = process.env.CALLMEBOT_PHONE || process.env.VITE_CALLMEBOT_PHONE;
   const callmebotKey = process.env.CALLMEBOT_API_KEY || process.env.VITE_CALLMEBOT_API_KEY;
@@ -106,20 +104,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // 2. Canal correo electrónico: Resend API (Clienta + copia opcional a Admin)
+  // 2. Canal correo electrónico: Resend API
   if (resendApiKey && (email || adminEmail)) {
     const recipients = [email, adminEmail].filter(Boolean) as string[];
     const html = `
-      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; background: #FAF8F5; border: 1px solid #E7E0D8; border-radius: 16px; color: #1C1917;">
-        <h2 style="font-family: Georgia, serif; color: #6E2C3B; margin-top: 0;">✨ Confirmación de Cita</h2>
+      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; background: #ECE5DC; border: 1px solid #C9A25E; border-radius: 16px; color: #2D2422;">
+        <h2 style="font-family: Georgia, serif; color: #7E524E; margin-top: 0;">✨ Confirmación de Cita · Kiki Spa</h2>
         <p>Hola <strong>${escapeHtml(nombre)}</strong>, tu reserva ha sido registrada con éxito:</p>
-        <div style="background: #FFFFFF; padding: 16px; border-radius: 12px; border: 1px solid #E7E0D8; margin: 16px 0;">
+        <div style="background: #F6F1EA; padding: 16px; border-radius: 12px; border: 1px solid #E2D9CE; margin: 16px 0;">
           <p style="margin: 6px 0;"><strong>💅 Servicio:</strong> ${escapeHtml(servicio)}</p>
           <p style="margin: 6px 0;"><strong>📆 Fecha:</strong> ${escapeHtml(fecha)}</p>
           <p style="margin: 6px 0;"><strong>🕐 Hora:</strong> ${escapeHtml(hora)} hrs</p>
           <p style="margin: 6px 0;"><strong>📱 Teléfono:</strong> ${escapeHtml(telefono)}</p>
         </div>
-        <p style="font-size: 13px; color: #78716C;">¡Te esperamos! Si necesitas reprogramar, contáctanos con anticipación.</p>
+        <p style="font-size: 13px; color: #746561;">¡Te esperamos! Si necesitas reprogramar, contáctanos con anticipación.</p>
       </div>
     `;
 
@@ -144,48 +142,72 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // 3. Canal Web Push nativo a la App Admin instalada
+  // 3. Canal Web Push nativo a la App Admin instalada (dynamic import ESM-safe)
   if (vapidPublic && vapidPrivate && supabaseUrl && supabaseServiceKey) {
     try {
-      webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
-      const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
-      const { data: subs } = await adminSupabase
-        .from("push_subscriptions")
-        .select("id, subscription");
+      const webpushMod = await import("web-push");
+      const wp =
+        (webpushMod as unknown as { default?: typeof webpushMod }).default?.sendNotification
+          ? (webpushMod as unknown as { default: typeof webpushMod }).default
+          : webpushMod;
 
-      if (subs && subs.length > 0) {
-        const pushPayload = JSON.stringify({
-          title: `Nueva Cita: ${nombre} ✨`,
-          body: `${servicio} · ${fecha} a las ${hora} hrs`,
-          url: "/admin",
-        });
+      wp.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
 
-        let sentCount = 0;
-        const expiredIds: string[] = [];
-
-        await Promise.all(
-          subs.map(async (row) => {
-            try {
-              await webpush.sendNotification(
-                row.subscription as webpush.PushSubscription,
-                pushPayload
-              );
-              sentCount += 1;
-            } catch (err: unknown) {
-              const statusCode = (err as { statusCode?: number })?.statusCode;
-              if (statusCode === 404 || statusCode === 410) {
-                expiredIds.push(row.id);
-              }
-            }
-          })
-        );
-
-        if (expiredIds.length > 0) {
-          await adminSupabase.from("push_subscriptions").delete().in("id", expiredIds);
+      const subsRes = await fetch(
+        `${supabaseUrl}/rest/v1/push_subscriptions?select=id,subscription`,
+        {
+          headers: {
+            apikey: supabaseServiceKey,
+            Authorization: `Bearer ${supabaseServiceKey}`,
+          },
         }
-        results.push = sentCount;
-      } else {
-        results.push = 0;
+      );
+
+      if (subsRes.ok) {
+        const subs = (await subsRes.json()) as { id: string; subscription: unknown }[];
+        if (subs.length > 0) {
+          const pushPayload = JSON.stringify({
+            title: `Nueva Cita: ${nombre} ✨`,
+            body: `${servicio} · ${fecha} a las ${hora} hrs`,
+            url: "/admin",
+          });
+
+          let sentCount = 0;
+          const expiredIds: string[] = [];
+
+          await Promise.all(
+            subs.map(async (row) => {
+              try {
+                await wp.sendNotification(
+                  row.subscription as Parameters<typeof wp.sendNotification>[0],
+                  pushPayload
+                );
+                sentCount += 1;
+              } catch (err: unknown) {
+                const statusCode = (err as { statusCode?: number })?.statusCode;
+                if (statusCode === 404 || statusCode === 410) {
+                  expiredIds.push(row.id);
+                }
+              }
+            })
+          );
+
+          if (expiredIds.length > 0) {
+            await fetch(
+              `${supabaseUrl}/rest/v1/push_subscriptions?id=in.(${expiredIds.join(",")})`,
+              {
+                method: "DELETE",
+                headers: {
+                  apikey: supabaseServiceKey,
+                  Authorization: `Bearer ${supabaseServiceKey}`,
+                },
+              }
+            );
+          }
+          results.push = sentCount;
+        } else {
+          results.push = 0;
+        }
       }
     } catch (error) {
       console.error("[API notify] Error Web Push:", error);
