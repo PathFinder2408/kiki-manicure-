@@ -1,64 +1,96 @@
-# Kiki Manicure 💅
+# Kiki Spa — Plataforma Full Stack de Agendamiento, CRM & Gestión Financiera ✨
 
-Una aplicación web moderna y elegante para **Kiki Manicure**, un salón profesional especializado en uñas y cuidado personal. 
+Plataforma web y **PWA dual (App Clienta + App Dueña)** diseñada bajo arquitectura modular y enfoque **White-Label**, pensada para digitalizar por completo la operación de un salón de belleza, spa y estética.
 
-Esta plataforma permite a los clientes explorar los servicios ofrecidos, ver el portafolio de trabajos realizados y agendar citas de manera rápida y sencilla, enviando notificaciones automáticas vía WhatsApp.
+Incluye motor de reservas en tiempo real, portal de clientas con **Google OAuth**, notificaciones seguras vía **Telegram** y **Correo**, blog dinámico de cosmetología/dermatología y un dashboard administrativo con monitoreo financiero, CRM con ficha clínica y control de caja mensual.
 
-## 🚀 Tecnologías Utilizadas
+---
 
-Este proyecto está construido con herramientas modernas de desarrollo web para garantizar un rendimiento óptimo, código mantenible y una excelente experiencia de usuario:
+## 🚀 Arquitectura y Stack Tecnológico
 
-- **[React](https://react.dev/)**: Biblioteca principal para la construcción de interfaces de usuario.
-- **[Vite](https://vitejs.dev/)**: Entorno de desarrollo ultrarrápido y empaquetador moderno.
-- **[TypeScript](https://www.typescriptlang.org/)**: Tipado estático para JavaScript, asegurando un código más robusto.
-- **[Tailwind CSS](https://tailwindcss.com/)**: Framework de CSS basado en utilidades para un diseño rápido y responsivo.
-- **[shadcn/ui](https://ui.shadcn.com/)**: Componentes de interfaz de usuario accesibles y personalizables.
-- **[Supabase](https://supabase.com/)**: Base de datos (PostgreSQL) y backend as a service para el almacenamiento de datos.
-- **CallMeBot API**: Integración para el envío automático de notificaciones de reservas por WhatsApp.
+* **Frontend:** React 18 · TypeScript · Vite (Code Splitting con `React.lazy` + `Suspense`)
+* **UI / Diseño:** Tailwind CSS · `shadcn/ui` · Paleta *Nordic Warm Luxury* (*Warm Greige, Smoked Rose & Gold*) · Diseño responsive *mobile-first*
+* **Estado y Formularios:** TanStack Query · React Hook Form · Zod (validación estricta)
+* **Visualización de Datos:** Recharts (flujo de caja diario y métricas)
+* **Backend & Base de Datos:** Supabase (PostgreSQL, Auth OAuth/OTP, Storage, Row Level Security, Triggers y funciones RPC)
+* **Serverless API (Vercel):**
+  * `/api/notify-whatsapp`: envío seguro desde servidor de alertas de citas por **Telegram Bot API**, **Resend Email** y **CallMeBot** sin exponer credenciales en el navegador.
+  * `/api/beauty-news`: lector RSS público de actualidad en dermatología, skincare y spa con caché en Edge.
+* **Calidad & CI/CD:** Vitest (pruebas unitarias de lógica de negocio) · GitHub Actions (`.github/workflows/ci.yml`) · Vercel
 
-## 💻 Desarrollo Local
+---
 
-Si deseas clonar el proyecto para trabajar en él localmente, sigue estos pasos.
+## 🧩 Módulos Implementados
 
-### Requisitos Previos
+### 1. Experiencia para Clientas (`/` · `/agendar` · `/mi-agenda` · `/blog`)
+* **Motor de Agendamiento Inteligente (`/agendar`):**
+  * Flujo guiado en 4 pasos con catálogo y precios cargados dinámicamente desde Supabase.
+  * Cálculo de disponibilidad en tiempo real (`src/lib/availability.ts`) con soporte para **doble bloque horario diario** (mañana y tarde) y bloqueo de *double-booking* a nivel de PostgreSQL.
+  * Exportación directa de la cita a **Google Calendar** y archivo **`.ics`** con recordatorio automático.
+* **Portal de Clientas (`/mi-agenda`):**
+  * Acceso sencillo con **Google OAuth** o **Enlace Mágico** por correo.
+  * Consulta segura de citas propias vía RPC (`get_my_appointments`) y evaluación del servicio (1–5 ⭐).
+* **Blog de Cosmetología, Spa & Dermatología (`/blog`):**
+  * Artículos administrables desde `/admin` combinados con noticias públicas automáticas (`/api/beauty-news`).
+* **Loaders Contextuales (`SalonLoader.tsx`):** Transiciones animadas temáticas según el contexto de carga (app, horarios, servicios, blog, ficha).
 
-Asegúrate de tener instalado [Node.js](https://nodejs.org/) (se recomienda la versión LTS) en tu computadora.
+### 2. Panel de Gestión y Finanzas (`/admin`)
+* **Resumen Ejecutivo:** KPIs mensuales en tiempo real (Ingresos, Egresos, Balance Neto, Margen % y Ticket Promedio) + gráfico de flujo de caja diario y desglose por método de pago.
+* **Agenda Mensual Compacta:** Navegación por mes (`MonthSelector`), agrupación colapsable por estado (*Pendientes/Confirmadas*, *Realizadas*, *Canceladas*) y cobro en 1 clic (`CobrarCitaModal`) que registra el ingreso automáticamente en caja.
+* **Finanzas por Mes:** Registro de ingresos/egresos con método de pago y exportación a **CSV** compatible con Excel.
+* **CRM de Clientas + Ficha Clínica:** Auto-registro automático mediante Trigger SQL al agendar una cita nueva, CRUD completo y **memoria personal de atenciones** (servicios entregados, tonos/productos usados y observaciones).
+* **Catálogo, Blog & Configuración White-Label:** Edición de servicios, galería de portafolio, publicación de artículos y horarios personalizados por cada día de la semana (mañana y tarde).
 
-### Pasos de Instalación
+### 3. Dos PWAs Instalables Independientes
+* **App Clienta (`Kiki Spa`):** `public/manifest.webmanifest` apuntando a `/agendar` con navegación inferior móvil (`MobileBottomNav`).
+* **App Dueña (`Kiki Admin`):** `public/admin-manifest.webmanifest` apuntando a `/admin` con ícono corporativo adaptado.
+
+---
+
+## 🧪 Pruebas y Verificación
+
+```bash
+# Chequeo estático de TypeScript
+npm run typecheck
+
+# Pruebas unitarias (motor de disponibilidad y analítica financiera)
+npm test
+
+# Build de producción
+npm run build
+```
+
+---
+
+## 💻 Instalación Local
 
 1. **Clona el repositorio:**
    ```bash
    git clone https://github.com/PathFinder2408/kiki-manicure-.git
-   ```
-
-2. **Navega al directorio del proyecto:**
-   ```bash
    cd kiki-manicure-
    ```
 
-3. **Instala las dependencias:**
+2. **Instala las dependencias:**
    ```bash
    npm install
    ```
 
-4. **Configura las variables de entorno:**
-   Crea un archivo llamado `.env` en la raíz del proyecto y agrega tus credenciales. *(Recuerda que este archivo no se sube a GitHub por seguridad)*:
+3. **Configura las variables de entorno:**
+   Copia `.env.example` a `.env` y completa tus credenciales (públicas `VITE_SUPABASE_*` para el cliente y privadas para las Serverless Functions en Vercel):
    ```env
-   VITE_SUPABASE_PROJECT_ID="tu_project_id"
-   VITE_SUPABASE_PUBLISHABLE_KEY="tu_key"
-   VITE_SUPABASE_URL="tu_url"
-   
-   VITE_CALLMEBOT_PHONE="+569..."
-   VITE_CALLMEBOT_API_KEY="tu_api_key_de_callmebot"
+   VITE_SUPABASE_URL="https://tu-proyecto.supabase.co"
+   VITE_SUPABASE_PUBLISHABLE_KEY="tu-anon-public-key"
+
+   TELEGRAM_BOT_TOKEN="tu-token"
+   TELEGRAM_CHAT_ID="tu-chat-id"
+   RESEND_API_KEY="re_tu_api_key"
+   ADMIN_EMAIL="tu-correo@ejemplo.com"
    ```
+
+4. **Ejecuta las migraciones SQL en Supabase:**
+   En el **SQL Editor** de tu proyecto Supabase, ejecuta en orden los scripts de `supabase/migrations/`.
 
 5. **Inicia el servidor de desarrollo:**
    ```bash
    npm run dev
    ```
-
-6. ¡Listo! Abre [http://localhost:8080](http://localhost:8080) (o el puerto que te indique la terminal) en tu navegador para ver la página en vivo.
-
-## 🌐 Despliegue
-
-Este proyecto está configurado para ser desplegado fácilmente en plataformas como **Vercel**. Cualquier cambio empujado a la rama `main` en GitHub activará automáticamente una nueva construcción y actualización en línea.
