@@ -55,8 +55,8 @@ export const InstallAppButton = ({
     };
   }, []);
 
-  if (isInstalled && !alwaysShow) {
-    if (compact) return null;
+  if (isInstalled) {
+    if (compact || !alwaysShow) return null;
     return (
       <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-100/80 text-green-800 text-xs font-medium">
         <Check className="w-4 h-4 shrink-0" /> App Instalada en Dispositivo

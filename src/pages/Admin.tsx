@@ -282,24 +282,35 @@ const Admin = () => {
       {/* Main Content */}
       <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
         {/* Topbar Móvil y Header */}
-        <header className="sticky top-0 z-20 bg-background/90 backdrop-blur border-b px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="font-serif font-bold text-lg sm:text-xl truncate">
+        <header className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b px-4 sm:px-8 py-3.5 flex items-start sm:items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="font-serif font-bold text-base sm:text-xl leading-snug">
               {adminName
                 ? `${getTimeGreeting()}, ${adminName}`
                 : NAV_ITEMS.find((n) => n.id === activeTab)?.label}
             </h1>
-            <p className="text-xs text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
               {mindfulQuote}
             </p>
           </div>
 
-          <div className="flex items-center gap-2 lg:hidden shrink-0">
-            <InstallAppButton compact alwaysShow appTitle="Kiki Admin" label="App Admin" />
-            <Button variant="outline" size="sm" onClick={() => navigate("/")} className="rounded-xl">
+          <div className="flex items-center gap-1.5 lg:hidden shrink-0">
+            <InstallAppButton compact appTitle="Kiki Admin" label="App Admin" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="rounded-xl h-8 px-2.5 text-xs"
+            >
               Web
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleLogout} title="Cerrar sesión">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-xl"
+              onClick={handleLogout}
+              title="Cerrar sesión"
+            >
               <LogOut className="w-4 h-4 text-destructive" />
             </Button>
           </div>
