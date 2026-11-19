@@ -154,14 +154,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       wp.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
 
+      const supabaseHeaders: Record<string, string> = {
+        apikey: supabaseServiceKey,
+      };
+      // Las llaves nuevas sb_secret_... no son JWT; enviarlas en Bearer hace que PostgREST las trate como anon
+      if (!supabaseServiceKey.startsWith("sb_secret_")) {
+        supabaseHeaders.Authorization = `Bearer ${supabaseServiceKey}`;
+      }
+
       const subsRes = await fetch(
         `${supabaseUrl}/rest/v1/push_subscriptions?select=id,subscription`,
-        {
-          headers: {
-            apikey: supabaseServiceKey,
-            Authorization: `Bearer ${supabaseServiceKey}`,
-          },
-        }
+        { headers: supabaseHeaders }
       );
 
       if (subsRes.ok) {
@@ -200,10 +203,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               `${supabaseUrl}/rest/v1/push_subscriptions?id=in.(${expiredIds.join(",")})`,
               {
                 method: "DELETE",
-                headers: {
-                  apikey: supabaseServiceKey,
-                  Authorization: `Bearer ${supabaseServiceKey}`,
-                },
+                headers: supabaseHeaders,
               }
             );
           }
